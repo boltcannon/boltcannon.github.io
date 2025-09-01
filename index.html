@@ -75,6 +75,13 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
   }
+  button:disabled {
+    background-color: #555;
+    color: #999;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
   #door { 
     width: 180px; 
     margin: 20px auto; 
@@ -122,6 +129,7 @@
   <div class="controls">
     <button id="submit">Submit</button>
     <button id="hint">Hint</button>
+    <button id="reveal">Reveal Answer</button>
   </div>
 
   <p id="message"></p>
@@ -165,8 +173,8 @@ const questions = [
   },
   {
     story: "You enter a hall of great kings and queens.",
-    question: "Who was the first female Prime Minister of the India?",
-    answer: "Indra Gandhi",
+    question: "Who was the first female Prime Minister of the UK?",
+    answer: "margaret thatcher",
     hint: "The Iron Lady.",
     color: "#2b1e1b",
     door: "https://i.imgur.com/1p6qkLJ.png"
@@ -174,7 +182,7 @@ const questions = [
   {
     story: "A riddle is inscribed on a stone tablet.",
     question: "I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?",
-    answer: "map",
+    answer: "a map",
     hint: "It's something you study in geography class.",
     color: "#22251e",
     door: "https://i.imgur.com/1p6qkLJ.png"
@@ -219,6 +227,7 @@ let score = 0;
 const maxHp = 3;
 let hp = maxHp;
 let shuffledQuestions = [];
+let revealUsed = false; // Tracks if the "Reveal" button has been used this game
 
 // DOM elements
 const storyEl = document.getElementById("story");
@@ -230,6 +239,7 @@ const doorEl = document.getElementById("door");
 const answerEl = document.getElementById("answer");
 const submitBtn = document.getElementById("submit");
 const hintBtn = document.getElementById("hint");
+const revealBtn = document.getElementById("reveal"); // New reveal button element
 const startBtn = document.getElementById("start");
 
 // Sound effects
@@ -241,6 +251,7 @@ const soundDoor = new Audio("https://freesound.org/data/previews/140/140459_1648
 function init() {
   submitBtn.addEventListener("click", submitAnswer);
   hintBtn.addEventListener("click", showHint);
+  revealBtn.addEventListener("click", revealAnswer); // Add event listener for new button
   startBtn.addEventListener("click", startGame);
   answerEl.addEventListener("keypress", function(e) {
     if (e.key === "Enter") {
@@ -356,6 +367,27 @@ function showHint() {
   }
 }
 
+// Reveal answer function
+function revealAnswer() {
+  // Check if the button has already been used
+  if (revealUsed) {
+    messageEl.textContent = "You've already used your one 'Reveal Answer' for this game.";
+    messageEl.style.color = "#ffdd55";
+    return;
+  }
+  
+  // If not used, reveal the answer
+  if (currentIndex < shuffledQuestions.length && hp > 0) {
+    const q = shuffledQuestions[currentIndex];
+    messageEl.textContent = `The answer is: ${q.answer}`;
+    messageEl.style.color = "#55ff55";
+    
+    // Disable the button for the rest of the game
+    revealUsed = true;
+    revealBtn.disabled = true;
+  }
+}
+
 // Start or restart game
 function startGame() {
   // Shuffle questions
@@ -365,9 +397,11 @@ function startGame() {
   currentIndex = 0;
   score = 0;
   hp = maxHp;
+  revealUsed = false; // Reset the reveal button state
   
   // Reset UI
   messageEl.textContent = "";
+  revealBtn.disabled = false; // Re-enable the reveal button
   updateUi();
   showRoom();
   
