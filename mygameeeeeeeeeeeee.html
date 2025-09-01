@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Dungeon</title>
+<style>
+  body {
+    font-family: sans-serif;
+    background-color: #111;
+    color: #eee;
+    padding: 10px;
+    text-align: center;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .container {
+    max-width: 600px;
+    width: 100%;
+  }
+  h1 { 
+    color: #ffdd55; 
+    font-size: 2.5em; 
+    margin-bottom: 10px; 
+    text-shadow: 0 0 10px rgba(255, 221, 85, 0.5);
+  }
+  #story, #question, #message, #progress, #hp {
+    margin: 15px 0;
+    font-size: 1.2em;
+    transition: all 0.5s ease;
+  }
+  #story {
+    font-style: italic;
+    color: #ccc;
+  }
+  #question {
+    font-weight: bold;
+    color: #ffdd55;
+  }
+  input { 
+    font-size: 1em; 
+    padding: 12px; 
+    width: 80%; 
+    max-width: 300px; 
+    margin: 10px 0; 
+    border-radius: 8px;
+    border: 2px solid #333;
+    background-color: #222;
+    color: white;
+    text-align: center;
+  }
+  input:focus {
+    outline: none;
+    border-color: #ffdd55;
+  }
+  button {
+    font-size: 1em;
+    padding: 12px 20px;
+    margin: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #333;
+    color: #eee;
+    border: none;
+    font-weight: bold;
+  }
+  button:hover { 
+    background-color: #ffdd55; 
+    color: #111; 
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  }
+  #door { 
+    width: 180px; 
+    margin: 20px auto; 
+    transition: all 0.5s ease;
+    filter: drop-shadow(0 0 8px rgba(255, 221, 85, 0.7));
+  }
+  .health-bar {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
+  }
+  .heart {
+    font-size: 1.8em;
+    margin: 0 5px;
+    transition: all 0.3s ease;
+  }
+  .controls {
+    margin: 20px 0;
+  }
+  @media (max-width: 500px){
+    h1 { font-size: 2em; }
+    #story,#question,#message,#progress,#hp { font-size: 1em; }
+    input { width: 90%; }
+    #door { width: 140px; }
+    button {
+      padding: 10px 16px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Knowledge Dungeon</h1>
+
+  <div id="hp" class="health-bar">
+    <span class="heart">♥</span>
+    <span class="heart">♥</span>
+    <span class="heart">♥</span>
+  </div>
+  <p id="progress">Progress: 0/0</p>
+  <p id="story">Press "Start" to begin your journey.</p>
+  <p id="question"></p>
+
+  <input id="answer" placeholder="Type your answer">
+  <div class="controls">
+    <button id="submit">Submit</button>
+    <button id="hint">Hint</button>
+  </div>
+
+  <p id="message"></p>
+  <button id="start">Start / Restart</button>
+</div>
+
+<script>
+// Game data
+const questions = [
+  {
+    story: "You wake in a dark library. A glowing book floats before you.",
+    question: "What is the square root of 144?",
+    answer: "12",
+    hint: "Perfect square of 12.",
+    color: "#1e1b29",
+    door: "https://i.imgur.com/1p6qkLJ.png"
+  },
+  {
+    story: "You find a puzzle box glowing faintly.",
+    question: "What is 15 × 8?",
+    answer: "120",
+    hint: "More than 100, less than 130.",
+    color: "#2b1b1b",
+    door: "https://i.imgur.com/1p6qkLJ.png"
+  },
+  {
+    story: "A chamber with murals of planets surrounds you.",
+    question: "Which planet is known as the 'Red Planet'?",
+    answer: "mars",
+    hint: "Fourth planet from the Sun.",
+    color: "#1b2b2b",
+    door: "https://i.imgur.com/1p6qkLJ.png"
+  },
+  {
+    story: "A glowing portal hums softly.",
+    question: "Who proposed the theory of relativity?",
+    answer: "albert einstein",
+    hint: "German-born physicist.",
+    color: "#1b1b2b",
+    door: "https://i.imgur.com/1p6qkLJ.png"
+  },
+  {
+    story: "You enter a hall of great kings and queens.",
+    question: "Who was the first female Prime Minister of the India?",
+    answer: "Indra Gandhi",
+    hint: "The Iron Lady.",
+    color: "#2b1e1b",
+    door: "https://i.imgur.com/1p6qkLJ.png"
+  },
+  {
+    story: "A riddle is inscribed on a stone tablet.",
+    question: "I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?",
+    answer: "map",
+    hint: "It's something you study in geography class.",
+    color: "#22251e",
+    door: "https://i.imgur.com/1p6qkLJ.png"
+  },
+  {
+    story: "A dragon's shadow falls over you.",
+    question: "In mythology, what creature is a half-man, half-bull?",
+    answer: "minotaur",
+    hint: "Found in a labyrinth.",
+    color: "#291b1e",
+    door: "https://i.imgur.com/1p6qkLJ.png"
+  },
+  {
+    story: "An ancient globe spins silently in the center of the room.",
+    question: "What is the largest organ in the human body?",
+    answer: "skin",
+    hint: "You wear it every day.",
+    color: "#1e2922",
+    door: "https://i.imgur.com/1p6qkLJ.png"
+  },
+  {
+    story: "You find a strange device with gears and levers.",
+    question: "In what year did the first man land on the moon?",
+    answer: "1969",
+    hint: "The year after 1968.",
+    color: "#1b2529",
+    door: "https://i.imgur.com/1p6qkLJ.png"
+  },
+  {
+    story: "A glowing compass points north, but the needle trembles.",
+    question: "What is the capital of France?",
+    answer: "paris",
+    hint: "Famous for the Eiffel Tower.",
+    color: "#1b1e29",
+    door: "https://i.imgur.com/1p6qkLJ.png"
+  }
+];
+
+// Game state
+let currentIndex = 0;
+let score = 0;
+const maxHp = 3;
+let hp = maxHp;
+let shuffledQuestions = [];
+
+// DOM elements
+const storyEl = document.getElementById("story");
+const questionEl = document.getElementById("question");
+const messageEl = document.getElementById("message");
+const progressEl = document.getElementById("progress");
+const hpEl = document.getElementById("hp");
+const doorEl = document.getElementById("door");
+const answerEl = document.getElementById("answer");
+const submitBtn = document.getElementById("submit");
+const hintBtn = document.getElementById("hint");
+const startBtn = document.getElementById("start");
+
+// Sound effects
+const soundCorrect = new Audio("https://freesound.org/data/previews/109/109662_945474-lq.mp3");
+const soundWrong = new Audio("https://freesound.org/data/previews/109/109665_945474-lq.mp3");
+const soundDoor = new Audio("https://freesound.org/data/previews/140/140459_1648175-lq.mp3");
+
+// Initialize the game
+function init() {
+  submitBtn.addEventListener("click", submitAnswer);
+  hintBtn.addEventListener("click", showHint);
+  startBtn.addEventListener("click", startGame);
+  answerEl.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+      submitAnswer();
+    }
+  });
+  
+  // Initial UI update
+  updateUi();
+}
+
+// Update UI elements
+function updateUi() {
+  // Update HP display
+  const hearts = hpEl.querySelectorAll(".heart");
+  hearts.forEach((heart, index) => {
+    heart.style.color = index < hp ? "#ff5555" : "#444";
+    heart.style.textShadow = index < hp ? "0 0 8px rgba(255, 85, 85, 0.7)" : "none";
+  });
+  
+  // Update progress
+  progressEl.textContent = `Progress: ${currentIndex}/${shuffledQuestions.length}`;
+}
+
+// Animate room transition
+function animateRoom() {
+  storyEl.style.opacity = 0;
+  questionEl.style.opacity = 0;
+  
+  setTimeout(() => {
+    storyEl.style.opacity = 1;
+    questionEl.style.opacity = 1;
+    soundDoor.play();
+  }, 300);
+}
+
+// Show current room
+function showRoom() {
+  if (hp <= 0) {
+    document.body.style.backgroundColor = "#440000";
+    storyEl.textContent = "You collapsed in the dungeon!";
+    questionEl.textContent = "";
+    messageEl.textContent = `Score: ${score}/${shuffledQuestions.length}`;
+    messageEl.style.color = "#ff5555";
+    return;
+  }
+  
+  if (currentIndex >= shuffledQuestions.length) {
+    document.body.style.backgroundColor = "#224422";
+    storyEl.textContent = "You escaped the Knowledge Dungeon!";
+    questionEl.textContent = "";
+    messageEl.textContent = `Final Score: ${score}/${shuffledQuestions.length}`;
+    messageEl.style.color = "#55ff55";
+    return;
+  }
+  
+  const q = shuffledQuestions[currentIndex];
+  document.body.style.backgroundColor = q.color || "#111";
+  storyEl.textContent = q.story;
+  questionEl.textContent = q.question;
+  answerEl.value = "";
+  messageEl.textContent = "";
+  
+  animateRoom();
+}
+
+// Submit answer
+function submitAnswer() {
+  if (currentIndex >= shuffledQuestions.length || hp <= 0) {
+    return;
+  }
+  
+  const q = shuffledQuestions[currentIndex];
+  const userAnswer = answerEl.value.trim().toLowerCase();
+  
+  // Clear the input field immediately
+  answerEl.value = "";
+  
+  if (!userAnswer) {
+    messageEl.textContent = "Type an answer or use Hint.";
+    messageEl.style.color = "#ffdd55";
+    return;
+  }
+  
+  if (userAnswer === q.answer.toLowerCase()) {
+    score++;
+    currentIndex++;
+    messageEl.textContent = "Correct! Moving to next room...";
+    messageEl.style.color = "#55ff55";
+    soundCorrect.play();
+    updateUi();
+    setTimeout(showRoom, 1500);
+  } else {
+    hp--;
+    messageEl.textContent = "Wrong! You lost 1 HP.";
+    messageEl.style.color = "#ff5555";
+    soundWrong.play();
+    updateUi();
+    
+    if (hp > 0) {
+      setTimeout(showRoom, 1500);
+    } else {
+      showRoom();
+    }
+  }
+}
+
+// Show hint
+function showHint() {
+  if (currentIndex < shuffledQuestions.length && hp > 0) {
+    messageEl.textContent = `Hint: ${shuffledQuestions[currentIndex].hint}`;
+    messageEl.style.color = "#ffdd55";
+  }
+}
+
+// Start or restart game
+function startGame() {
+  // Shuffle questions
+  shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+  
+  // Reset game state
+  currentIndex = 0;
+  score = 0;
+  hp = maxHp;
+  
+  // Reset UI
+  messageEl.textContent = "";
+  updateUi();
+  showRoom();
+  
+  // Focus on answer input
+  setTimeout(() => {
+    answerEl.focus();
+  }, 500);
+}
+
+// Initialize the game when page loads
+window.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
+
