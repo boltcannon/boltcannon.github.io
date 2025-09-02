@@ -1,419 +1,709 @@
+I've updated your HTML file with the necessary changes to save and retrieve high scores using `localStorage`.
+
+All you need to do is **copy and paste the entire code below** and replace the contents of your existing HTML file with it.
+
+-----
+
+### Key Changes Made
+
+  * **No Firebase:** The entire Firebase section has been removed, including the SDK imports and all related functions (`initFirebase`, `saveHighScore`, `setupHighScoresListener`).
+  * **Local Storage Functions:** New functions `getHighScores` and `saveHighScore` were created to handle data using the browser's built-in `localStorage`.
+  * **Persistent Scores:** When a user completes a game, their score is saved to `localStorage` under their username. The game will keep the user's highest score.
+  * **No Global Leaderboard:** Since data is stored locally, each user will only see their own scores and not a shared, global list.
+
+You can now open this single file in any web browser to play the game and see your high scores persist.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Knowledge Dungeon</title>
-<style>
-  body {
-    font-family: sans-serif;
-    background-color: #111;
-    color: #eee;
-    padding: 10px;
-    text-align: center;
-    margin: 0;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
-  .container {
-    max-width: 600px;
-    width: 100%;
-  }
-  h1 { 
-    color: #ffdd55; 
-    font-size: 2.5em; 
-    margin-bottom: 10px; 
-    text-shadow: 0 0 10px rgba(255, 221, 85, 0.5);
-  }
-  #story, #question, #message, #progress, #hp {
-    margin: 15px 0;
-    font-size: 1.2em;
-    transition: all 0.5s ease;
-  }
-  #story {
-    font-style: italic;
-    color: #ccc;
-  }
-  #question {
-    font-weight: bold;
-    color: #ffdd55;
-  }
-  input { 
-    font-size: 1em; 
-    padding: 12px; 
-    width: 80%; 
-    max-width: 300px; 
-    margin: 10px 0; 
-    border-radius: 8px;
-    border: 2px solid #333;
-    background-color: #222;
-    color: white;
-    text-align: center;
-  }
-  input:focus {
-    outline: none;
-    border-color: #ffdd55;
-  }
-  button {
-    font-size: 1em;
-    padding: 12px 20px;
-    margin: 8px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background-color: #333;
-    color: #eee;
-    border: none;
-    font-weight: bold;
-  }
-  button:hover { 
-    background-color: #ffdd55; 
-    color: #111; 
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-  }
-  button:disabled {
-    background-color: #555;
-    color: #999;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
-  #door { 
-    width: 180px; 
-    margin: 20px auto; 
-    transition: all 0.5s ease;
-    filter: drop-shadow(0 0 8px rgba(255, 221, 85, 0.7));
-  }
-  .health-bar {
-    display: flex;
-    justify-content: center;
-    margin: 10px 0;
-  }
-  .heart {
-    font-size: 1.8em;
-    margin: 0 5px;
-    transition: all 0.3s ease;
-  }
-  .controls {
-    margin: 20px 0;
-  }
-  @media (max-width: 500px){
-    h1 { font-size: 2em; }
-    #story,#question,#message,#progress,#hp { font-size: 1em; }
-    input { width: 90%; }
-    #door { width: 140px; }
-    button {
-      padding: 10px 16px;
-    }
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Adventure</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #87ceeb;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .pixel-border {
+            border-style: solid;
+            border-image-slice: 3;
+            border-image-repeat: repeat;
+            border-image-width: 8px;
+            border-image-outset: 4px;
+        }
+
+        .border-green-800 {
+            border-image-source: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><rect fill="%23166534" width="8" height="8"/><rect fill="%23166534" x="8" width="8" height="8"/><rect fill="%23166534" x="16" width="8" height="8"/><rect fill="%23166534" y="8" width="8" height="8"/><rect fill="%23166534" y="16" width="8" height="8"/><rect fill="%23166534" x="8" y="16" width="8" height="8"/><rect fill="%23166534" x="16" y="8" width="8" height="8"/><rect fill="%23166534" x="16" y="16" width="8" height="8"/></svg>');
+        }
+        .text-border {
+            -webkit-text-stroke-width: 2px;
+            -webkit-text-stroke-color: #000;
+        }
+        .pixelated {
+            image-rendering: pixelated;
+        }
+    </style>
 </head>
-<body>
-<div class="container">
-  <h1>Knowledge Dungeon</h1>
+<body class="flex items-center justify-center min-h-screen">
 
-  <div id="hp" class="health-bar">
-    <span class="heart">♥</span>
-    <span class="heart">♥</span>
-    <span class="heart">♥</span>
-  </div>
-  <p id="progress">Progress: 0/0</p>
-  <p id="story">Press "Start" to begin your journey.</p>
-  <p id="question"></p>
+<div id="messageBox" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-2xl max-w-sm w-full text-center text-gray-800 border-8 border-green-800">
+        <h2 id="messageBoxTitle" class="text-xl font-bold mb-4"></h2>
+        <p id="messageBoxContent" class="mb-6"></p>
+        <button id="messageBoxCloseBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full shadow-lg">OK</button>
+    </div>
+</div>
 
-  <input id="answer" placeholder="Type your answer">
-  <div class="controls">
-    <button id="submit">Submit</button>
-    <button id="hint">Hint</button>
-    <button id="reveal">Reveal Answer</button>
-  </div>
+<div id="usernamePrompt" class="absolute inset-0 bg-blue-500 z-40 flex flex-col items-center justify-center text-white p-4">
+    <div class="bg-white p-8 rounded-xl shadow-2xl text-center text-gray-800 max-w-md w-full border-8 border-green-800">
+        <h1 class="text-3xl font-bold mb-4">Math Adventure!</h1>
+        <p class="mb-6 text-sm">Enter your username to begin.</p>
+        <input id="usernameInput" type="text" placeholder="Your Name" class="w-full p-3 rounded-lg border-2 border-gray-400 focus:outline-none focus:border-blue-500 mb-4 text-center">
+        <button id="usernameSubmitBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+            Let's Go!
+        </button>
+    </div>
+</div>
 
-  <p id="message"></p>
-  <button id="start">Start / Restart</button>
+<div id="mainMenu" class="absolute inset-0 bg-blue-500 z-30 flex-col items-center justify-center text-white hidden">
+    <h1 class="text-5xl md:text-6xl text-border mb-8">MATH ADVENTURE</h1>
+    <div class="space-y-4 w-full max-w-xs p-4">
+        <button id="playBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 px-6 rounded-full shadow-lg transition-transform transform hover:scale-105">
+            Start Game
+        </button>
+        <button id="achievementsBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 px-6 rounded-full shadow-lg transition-transform transform hover:scale-105">
+            High Scores
+        </button>
+        <button id="creditsBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 px-6 rounded-full shadow-lg transition-transform transform hover:scale-105">
+            Credits
+        </button>
+        <button id="quitBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-transform transform hover:scale-105">
+            Quit
+        </button>
+    </div>
+</div>
+
+<div id="achievementsScreen" class="absolute inset-0 bg-blue-500 z-30 hidden flex-col items-center justify-center p-4">
+    <h1 class="text-4xl md:text-5xl text-border mb-8">High Scores</h1>
+    <div class="bg-white p-6 rounded-xl shadow-2xl text-gray-800 max-w-sm w-full border-8 border-green-800 mb-6">
+        <h2 class="text-xl font-bold mb-4 text-center">Top 5 Scores</h2>
+        <ul id="highScoresList" class="space-y-2 text-sm text-center">
+            </ul>
+    </div>
+    <div class="flex flex-col items-center mt-4">
+        <span class="text-sm">Scores are saved locally in your browser.</span>
+    </div>
+    <button id="achievementsBackBtn" class="absolute bottom-8 left-1/2 -translate-x-1/2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+        Back
+    </button>
+</div>
+
+<div id="creditsScreen" class="absolute inset-0 bg-blue-500 z-30 hidden flex-col items-center justify-center p-4">
+    <h1 class="text-4xl md:text-5xl text-border mb-8">Credits</h1>
+    <div class="bg-white p-6 rounded-xl shadow-2xl text-gray-800 max-w-sm w-full border-8 border-green-800 mb-6 text-center">
+        <p class="mb-2">Game Design & Code by Gemini</p>
+        <p class="mb-2">Inspired by the classic Super Mario Bros.</p>
+        <p class="mb-2">Powered by JavaScript</p>
+    </div>
+    <button id="creditsBackBtn" class="absolute bottom-8 left-1/2 -translate-x-1/2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+        Back
+    </button>
+</div>
+
+<div id="gameOverScreen" class="absolute inset-0 bg-gray-900 bg-opacity-75 z-40 hidden flex-col items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-2xl max-w-md w-full text-center text-gray-800 border-8 border-green-800">
+        <h2 class="text-3xl font-bold mb-4">Game Over!</h2>
+        <p class="mb-2">Your Score:</p>
+        <p id="finalScore" class="text-4xl font-bold mb-6 text-green-600"></p>
+        <button id="gameOverRestartBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+            Play Again
+        </button>
+        <button id="gameOverMenuBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-full shadow-lg mt-4 transition-transform transform hover:scale-105">
+            Main Menu
+        </button>
+    </div>
+</div>
+
+<div id="questionModal" class="absolute inset-0 bg-gray-900 bg-opacity-75 z-40 hidden flex-col items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-2xl max-w-md w-full text-center text-gray-800 border-8 border-green-800">
+        <h2 class="text-2xl font-bold mb-4">Question!</h2>
+        <p id="questionText" class="text-3xl font-bold mb-4"></p>
+        <input id="answerInput" type="number" placeholder="Enter answer" class="w-full p-3 rounded-lg border-2 border-gray-400 focus:outline-none focus:border-blue-500 mb-4 text-center">
+        <button id="submitAnswerBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+            Submit
+        </button>
+    </div>
+</div>
+
+<div id="gameContainer" class="hidden relative w-full h-full flex items-center justify-center">
+    <div class="absolute top-4 left-4 p-4 rounded-xl bg-gray-800 bg-opacity-75 text-white font-bold z-10">
+        <p>Score: <span id="gameScore">0</span></p>
+        <p>Username: <span id="gameUsername"></span></p>
+    </div>
+    <canvas id="gameCanvas" class="bg-blue-300 rounded-lg shadow-2xl"></canvas>
 </div>
 
 <script>
-// Game data
-const questions = [
-  {
-    story: "You wake in a dark library. A glowing book floats before you.",
-    question: "What is the square root of 144?",
-    answer: "12",
-    hint: "Perfect square of 12.",
-    color: "#1e1b29",
-    door: "https://i.imgur.com/1p6qkLJ.png"
-  },
-  {
-    story: "You find a puzzle box glowing faintly.",
-    question: "What is 15 × 8?",
-    answer: "120",
-    hint: "More than 100, less than 130.",
-    color: "#2b1b1b",
-    door: "https://i.imgur.com/1p6qkLJ.png"
-  },
-  {
-    story: "A chamber with murals of planets surrounds you.",
-    question: "Which planet is known as the 'Red Planet'?",
-    answer: "mars",
-    hint: "Fourth planet from the Sun.",
-    color: "#1b2b2b",
-    door: "https://i.imgur.com/1p6qkLJ.png"
-  },
-  {
-    story: "A glowing portal hums softly.",
-    question: "Who proposed the theory of relativity?",
-    answer: "albert einstein",
-    hint: "German-born physicist.",
-    color: "#1b1b2b",
-    door: "https://i.imgur.com/1p6qkLJ.png"
-  },
-  {
-    story: "You enter a hall of great kings and queens.",
-    question: "Who was the first female Prime Minister of the UK?",
-    answer: "margaret thatcher",
-    hint: "The Iron Lady.",
-    color: "#2b1e1b",
-    door: "https://i.imgur.com/1p6qkLJ.png"
-  },
-  {
-    story: "A riddle is inscribed on a stone tablet.",
-    question: "I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?",
-    answer: "a map",
-    hint: "It's something you study in geography class.",
-    color: "#22251e",
-    door: "https://i.imgur.com/1p6qkLJ.png"
-  },
-  {
-    story: "A dragon's shadow falls over you.",
-    question: "In mythology, what creature is a half-man, half-bull?",
-    answer: "minotaur",
-    hint: "Found in a labyrinth.",
-    color: "#291b1e",
-    door: "https://i.imgur.com/1p6qkLJ.png"
-  },
-  {
-    story: "An ancient globe spins silently in the center of the room.",
-    question: "What is the largest organ in the human body?",
-    answer: "skin",
-    hint: "You wear it every day.",
-    color: "#1e2922",
-    door: "https://i.imgur.com/1p6qkLJ.png"
-  },
-  {
-    story: "You find a strange device with gears and levers.",
-    question: "In what year did the first man land on the moon?",
-    answer: "1969",
-    hint: "The year after 1968.",
-    color: "#1b2529",
-    door: "https://i.imgur.com/1p6qkLJ.png"
-  },
-  {
-    story: "A glowing compass points north, but the needle trembles.",
-    question: "What is the capital of France?",
-    answer: "paris",
-    hint: "Famous for the Eiffel Tower.",
-    color: "#1b1e29",
-    door: "https://i.imgur.com/1p6qkLJ.png"
-  }
-];
+    // Game State Variables
+    let gameCanvas, ctx;
+    let username = '';
+    let score = 0;
+    let gameLoopInterval;
+    let isGameOver = false;
+    let currentQuestion = null;
+    let isGamePaused = false;
+    let enemiesDefeatedCount = 0;
+    let currentLevel = 1;
 
-// Game state
-let currentIndex = 0;
-let score = 0;
-const maxHp = 3;
-let hp = maxHp;
-let shuffledQuestions = [];
-let revealUsed = false; // Tracks if the "Reveal" button has been used this game
+    // Player State
+    const player = {
+        x: 50,
+        y: 0,
+        width: 32,
+        height: 48,
+        speed: 5,
+        velocityY: 0,
+        isJumping: false,
+        isDucking: false
+    };
 
-// DOM elements
-const storyEl = document.getElementById("story");
-const questionEl = document.getElementById("question");
-const messageEl = document.getElementById("message");
-const progressEl = document.getElementById("progress");
-const hpEl = document.getElementById("hp");
-const doorEl = document.getElementById("door");
-const answerEl = document.getElementById("answer");
-const submitBtn = document.getElementById("submit");
-const hintBtn = document.getElementById("hint");
-const revealBtn = document.getElementById("reveal"); // New reveal button element
-const startBtn = document.getElementById("start");
-
-// Sound effects
-const soundCorrect = new Audio("https://freesound.org/data/previews/109/109662_945474-lq.mp3");
-const soundWrong = new Audio("https://freesound.org/data/previews/109/109665_945474-lq.mp3");
-const soundDoor = new Audio("https://freesound.org/data/previews/140/140459_1648175-lq.mp3");
-
-// Initialize the game
-function init() {
-  submitBtn.addEventListener("click", submitAnswer);
-  hintBtn.addEventListener("click", showHint);
-  revealBtn.addEventListener("click", revealAnswer); // Add event listener for new button
-  startBtn.addEventListener("click", startGame);
-  answerEl.addEventListener("keypress", function(e) {
-    if (e.key === "Enter") {
-      submitAnswer();
-    }
-  });
-  
-  // Initial UI update
-  updateUi();
-}
-
-// Update UI elements
-function updateUi() {
-  // Update HP display
-  const hearts = hpEl.querySelectorAll(".heart");
-  hearts.forEach((heart, index) => {
-    heart.style.color = index < hp ? "#ff5555" : "#444";
-    heart.style.textShadow = index < hp ? "0 0 8px rgba(255, 85, 85, 0.7)" : "none";
-  });
-  
-  // Update progress
-  progressEl.textContent = `Progress: ${currentIndex}/${shuffledQuestions.length}`;
-}
-
-// Animate room transition
-function animateRoom() {
-  storyEl.style.opacity = 0;
-  questionEl.style.opacity = 0;
-  
-  setTimeout(() => {
-    storyEl.style.opacity = 1;
-    questionEl.style.opacity = 1;
-    soundDoor.play();
-  }, 300);
-}
-
-// Show current room
-function showRoom() {
-  if (hp <= 0) {
-    document.body.style.backgroundColor = "#440000";
-    storyEl.textContent = "You collapsed in the dungeon!";
-    questionEl.textContent = "";
-    messageEl.textContent = `Score: ${score}/${shuffledQuestions.length}`;
-    messageEl.style.color = "#ff5555";
-    return;
-  }
-  
-  if (currentIndex >= shuffledQuestions.length) {
-    document.body.style.backgroundColor = "#224422";
-    storyEl.textContent = "You escaped the Knowledge Dungeon!";
-    questionEl.textContent = "";
-    messageEl.textContent = `Final Score: ${score}/${shuffledQuestions.length}`;
-    messageEl.style.color = "#55ff55";
-    return;
-  }
-  
-  const q = shuffledQuestions[currentIndex];
-  document.body.style.backgroundColor = q.color || "#111";
-  storyEl.textContent = q.story;
-  questionEl.textContent = q.question;
-  answerEl.value = "";
-  messageEl.textContent = "";
-  
-  animateRoom();
-}
-
-// Submit answer
-function submitAnswer() {
-  if (currentIndex >= shuffledQuestions.length || hp <= 0) {
-    return;
-  }
-  
-  const q = shuffledQuestions[currentIndex];
-  const userAnswer = answerEl.value.trim().toLowerCase();
-  
-  // Clear the input field immediately
-  answerEl.value = "";
-  
-  if (!userAnswer) {
-    messageEl.textContent = "Type an answer or use Hint.";
-    messageEl.style.color = "#ffdd55";
-    return;
-  }
-  
-  if (userAnswer === q.answer.toLowerCase()) {
-    score++;
-    currentIndex++;
-    messageEl.textContent = "Correct! Moving to next room...";
-    messageEl.style.color = "#55ff55";
-    soundCorrect.play();
-    updateUi();
-    setTimeout(showRoom, 1500);
-  } else {
-    hp--;
-    messageEl.textContent = "Wrong! You lost 1 HP.";
-    messageEl.style.color = "#ff5555";
-    soundWrong.play();
-    updateUi();
+    // Game Environment
+    const gravity = 0.5;
+    let gameWidth = 800;
+    let gameHeight = 600;
+    let isGameRunning = false;
+    let keys = {};
+    const groundHeight = 50;
+    const enemies = [];
+    const bullets = [];
+    let enemySpawnTimer = 0;
     
-    if (hp > 0) {
-      setTimeout(showRoom, 1500);
-    } else {
-      showRoom();
-    }
-  }
-}
+    // Platforms with holes
+    const platforms = [];
 
-// Show hint
-function showHint() {
-  if (currentIndex < shuffledQuestions.length && hp > 0) {
-    messageEl.textContent = `Hint: ${shuffledQuestions[currentIndex].hint}`;
-    messageEl.style.color = "#ffdd55";
-  }
-}
+    // --- High Score Logic (using localStorage) ---
+    const HIGH_SCORES_KEY = 'mathAdventureHighScores';
 
-// Reveal answer function
-function revealAnswer() {
-  // Check if the button has already been used
-  if (revealUsed) {
-    messageEl.textContent = "You've already used your one 'Reveal Answer' for this game.";
-    messageEl.style.color = "#ffdd55";
-    return;
-  }
-  
-  // If not used, reveal the answer
-  if (currentIndex < shuffledQuestions.length && hp > 0) {
-    const q = shuffledQuestions[currentIndex];
-    messageEl.textContent = `The answer is: ${q.answer}`;
-    messageEl.style.color = "#55ff55";
+    const getHighScores = () => {
+        try {
+            const scores = JSON.parse(localStorage.getItem(HIGH_SCORES_KEY) || '[]');
+            // Sort in descending order
+            scores.sort((a, b) => b.score - a.score);
+            return scores;
+        } catch (error) {
+            console.error("Error loading high scores from localStorage:", error);
+            return [];
+        }
+    };
+
+    const saveHighScore = (finalScore) => {
+        const scores = getHighScores();
+        const now = Date.now();
+
+        // Find the current user's entry
+        const userIndex = scores.findIndex(s => s.username === username);
+
+        if (userIndex !== -1) {
+            // If user exists, update their score if the new one is higher
+            if (finalScore > scores[userIndex].score) {
+                scores[userIndex].score = finalScore;
+                scores[userIndex].timestamp = now;
+            }
+        } else {
+            // Otherwise, add a new entry for the user
+            scores.push({
+                username: username,
+                score: finalScore,
+                timestamp: now
+            });
+        }
+
+        // Save the updated list to localStorage
+        try {
+            localStorage.setItem(HIGH_SCORES_KEY, JSON.stringify(scores));
+        } catch (error) {
+            console.error("Error saving high scores to localStorage:", error);
+        }
+        
+        // Refresh the displayed list
+        displayHighScores(scores.slice(0, 5));
+    };
+
+    const displayHighScores = (scores) => {
+        const highScoresList = document.getElementById('highScoresList');
+        highScoresList.innerHTML = '';
+        
+        if (scores.length === 0) {
+            highScoresList.innerHTML = '<li class="text-sm text-gray-500">No scores recorded yet.</li>';
+            return;
+        }
+        
+        scores.forEach((score, index) => {
+            const li = document.createElement('li');
+            li.textContent = `${index + 1}. ${score.username}: ${score.score}`;
+            highScoresList.appendChild(li);
+        });
+    };
+
+    // --- Game Logic Functions ---
+    const spawnEnemy = () => {
+        enemies.push({
+            x: gameWidth,
+            y: gameHeight - groundHeight - 32,
+            width: 32,
+            height: 32,
+            speed: Math.random() * 2 + 1,
+            color: '#008000'
+        });
+    };
     
-    // Disable the button for the rest of the game
-    revealUsed = true;
-    revealBtn.disabled = true;
-  }
-}
+    const advanceToNextFrame = () => {
+        enemiesDefeatedCount = 0;
+        enemies.length = 0;
+        bullets.length = 0;
+        player.x = 50;
+        player.y = 0;
+        currentLevel++;
+        createPlatforms();
+        showMessageBox("Level Complete!", `You've advanced to Level ${currentLevel}!`);
+    };
 
-// Start or restart game
-function startGame() {
-  // Shuffle questions
-  shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
-  
-  // Reset game state
-  currentIndex = 0;
-  score = 0;
-  hp = maxHp;
-  revealUsed = false; // Reset the reveal button state
-  
-  // Reset UI
-  messageEl.textContent = "";
-  revealBtn.disabled = false; // Re-enable the reveal button
-  updateUi();
-  showRoom();
-  
-  // Focus on answer input
-  setTimeout(() => {
-    answerEl.focus();
-  }, 500);
-}
+    const generateQuestion = (difficulty) => {
+        let num1, num2;
+        const operation = ['+', '-', '*', '/'][Math.floor(Math.random() * 4)];
+        let answer;
 
-// Initialize the game when page loads
-window.addEventListener("DOMContentLoaded", init);
+        if (difficulty < 2) {
+            num1 = Math.floor(Math.random() * 10) + 1;
+            num2 = Math.floor(Math.random() * 10) + 1;
+        } else if (difficulty < 4) {
+            num1 = Math.floor(Math.random() * 20) + 1;
+            num2 = Math.floor(Math.random() * 20) + 1;
+        } else {
+            num1 = Math.floor(Math.random() * 50) + 1;
+            num2 = Math.floor(Math.random() * 50) + 1;
+        }
+
+        switch (operation) {
+            case '+':
+                answer = num1 + num2;
+                break;
+            case '-':
+                answer = num1 - num2;
+                break;
+            case '*':
+                num1 = Math.floor(Math.random() * 12) + 1;
+                num2 = Math.floor(Math.random() * 12) + 1;
+                answer = num1 * num2;
+                break;
+            case '/':
+                num2 = Math.floor(Math.random() * 10) + 1;
+                num1 = num2 * (Math.floor(Math.random() * 10) + 1);
+                answer = num1 / num2;
+                break;
+        }
+
+        return { text: `${num1} ${operation} ${num2} = ?`, answer: answer };
+    };
+
+    const checkCollision = (obj1, obj2) => {
+        return obj1.x < obj2.x + obj2.width &&
+                obj1.x + obj1.width > obj2.x &&
+                obj1.y < obj2.y + obj2.height &&
+                obj1.y + obj1.height > obj2.y;
+    };
+    
+    // --- Game Engine and Rendering ---
+    const drawPlayer = () => {
+        // Body (red shirt)
+        ctx.fillStyle = '#ff0000';
+        if (player.isDucking) {
+            ctx.fillRect(player.x, player.y + 24, 32, 24);
+        } else {
+            ctx.fillRect(player.x, player.y + 16, 32, 32);
+        }
+
+        // Head (brown hair)
+        ctx.fillStyle = '#8B4513';
+        if (player.isDucking) {
+            ctx.fillRect(player.x + 8, player.y + 8, 16, 16);
+        } else {
+            ctx.fillRect(player.x + 8, player.y, 16, 16);
+        }
+        
+        // Face (skin tone)
+        ctx.fillStyle = '#ffdbac';
+        if (player.isDucking) {
+            ctx.fillRect(player.x + 8, player.y + 16, 16, 8);
+        } else {
+            ctx.fillRect(player.x + 8, player.y + 8, 16, 8);
+        }
+        
+        // Legs (blue pants)
+        ctx.fillStyle = '#0000ff';
+        if (player.isDucking) {
+            ctx.fillRect(player.x, player.y + 32, 16, 16);
+            ctx.fillRect(player.x + 16, player.y + 32, 16, 16);
+        } else {
+            ctx.fillRect(player.x, player.y + 32, 16, 16);
+            ctx.fillRect(player.x + 16, player.y + 32, 16, 16);
+        }
+    };
+
+    const drawBullets = () => {
+        ctx.fillStyle = '#ffff00';
+        bullets.forEach(bullet => {
+            ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        });
+    };
+
+    const drawEnemies = () => {
+        enemies.forEach(enemy => {
+            ctx.fillStyle = enemy.color;
+            ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+        });
+    };
+
+    const drawPlatforms = () => {
+        ctx.fillStyle = '#654321';
+        platforms.forEach(platform => {
+            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+        });
+    };
+
+    const update = () => {
+        if (!isGameRunning || isGameOver || isGamePaused) return;
+        
+        // Player movement
+        player.velocityY += gravity;
+        player.y += player.velocityY;
+
+        // Apply horizontal movement
+        if (keys['ArrowLeft'] || keys['a']) {
+            player.x -= player.speed;
+        }
+        if (keys['ArrowRight'] || keys['d']) {
+            player.x += player.speed;
+        }
+        
+        // Ducking logic
+        if (keys['ArrowDown'] || keys['s']) {
+            player.isDucking = true;
+            player.height = 24;
+        } else {
+            player.isDucking = false;
+            player.height = 48;
+        }
+
+        // Keep player on screen
+        if (player.x < 0) player.x = 0;
+        if (player.x + player.width > gameWidth) player.x = gameWidth - player.width;
+        
+        // Player-platform collision
+        let onGround = false;
+        for (const platform of platforms) {
+            if (player.y + player.height >= platform.y && player.y + player.height <= platform.y + platform.height &&
+                player.x + player.width > platform.x && player.x < platform.x + platform.width) {
+                
+                player.y = platform.y - player.height;
+                player.velocityY = 0;
+                player.isJumping = false;
+                onGround = true;
+                break;
+            }
+        }
+        if (!onGround && player.y + player.height < gameHeight) {
+            player.isJumping = true;
+        }
+
+        // End game if player falls off screen
+        if (player.y > gameHeight) {
+            endGame();
+            return;
+        }
+        
+        // Update bullets
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            bullets[i].x += bullets[i].speed;
+            if (bullets[i].x > gameWidth) {
+                bullets.splice(i, 1);
+            }
+        }
+        
+        // Update enemies
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            enemies[i].x -= enemies[i].speed;
+            if (enemies[i].x + enemies[i].width < 0) {
+                enemies.splice(i, 1);
+            }
+        }
+
+        // Bullet-enemy collision
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            for (let j = enemies.length - 1; j >= 0; j--) {
+                if (checkCollision(bullets[i], enemies[j])) {
+                    bullets.splice(i, 1);
+                    enemies.splice(j, 1);
+                    enemiesDefeatedCount++;
+                    if (enemiesDefeatedCount >= 4) {
+                        advanceToNextFrame();
+                    }
+                    currentQuestion = generateQuestion(Math.floor(score / 50));
+                    showQuestionModal(currentQuestion);
+                    isGamePaused = true;
+                    break;
+                }
+            }
+        }
+
+        // Player-enemy collision
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            if (checkCollision(player, enemies[i])) {
+                endGame();
+            }
+        }
+        
+        // Enemy spawning
+        enemySpawnTimer++;
+        if (enemySpawnTimer > 180) { // Spawn every 3 seconds (60 FPS * 3)
+            spawnEnemy();
+            enemySpawnTimer = 0;
+        }
+    };
+    
+    const draw = () => {
+        if (!isGameRunning) return;
+        
+        ctx.clearRect(0, 0, gameWidth, gameHeight);
+        
+        // Draw background
+        ctx.fillStyle = '#87ceeb';
+        ctx.fillRect(0, 0, gameWidth, gameHeight);
+        
+        // Draw platforms
+        drawPlatforms();
+
+        // Draw game elements
+        drawEnemies();
+        drawBullets();
+        drawPlayer();
+
+        // Draw score and username
+        const scoreElement = document.getElementById('gameScore');
+        if (scoreElement) {
+            scoreElement.textContent = score;
+        }
+        const usernameElement = document.getElementById('gameUsername');
+        if (usernameElement) {
+            usernameElement.textContent = username;
+        }
+    };
+    
+    const gameLoop = () => {
+        if (isGamePaused) {
+            gameLoopInterval = requestAnimationFrame(gameLoop);
+            return;
+        }
+        update();
+        draw();
+        gameLoopInterval = requestAnimationFrame(gameLoop);
+    };
+
+    const createPlatforms = () => {
+        platforms.length = 0;
+        const groundY = gameHeight - groundHeight;
+        
+        // Create platforms based on the current level
+        switch(currentLevel) {
+            case 1:
+                platforms.push({ x: 0, y: groundY, width: 250, height: groundHeight });
+                platforms.push({ x: 400, y: groundY, width: 100, height: groundHeight });
+                platforms.push({ x: 600, y: groundY, width: 200, height: groundHeight });
+                break;
+            case 2:
+                platforms.push({ x: 0, y: groundY, width: 150, height: groundHeight });
+                platforms.push({ x: 250, y: groundY, width: 150, height: groundHeight });
+                platforms.push({ x: 500, y: groundY, width: 300, height: groundHeight });
+                break;
+            case 3:
+                platforms.push({ x: 0, y: groundY, width: 100, height: groundHeight });
+                platforms.push({ x: 200, y: groundY - 50, width: 200, height: groundHeight });
+                platforms.push({ x: 500, y: groundY, width: 300, height: groundHeight });
+                break;
+            default:
+                // Fallback for higher levels, create a longer single platform
+                platforms.push({ x: 0, y: groundY, width: gameWidth, height: groundHeight });
+                break;
+        }
+    };
+
+    const startGame = () => {
+        score = 0;
+        enemiesDefeatedCount = 0;
+        currentLevel = 1;
+        isGameOver = false;
+        player.x = 50;
+        player.y = 0;
+        player.velocityY = 0;
+        
+        enemies.length = 0;
+        bullets.length = 0;
+        createPlatforms();
+        
+        document.getElementById('mainMenu').classList.add('hidden');
+        document.getElementById('gameContainer').classList.remove('hidden');
+        
+        isGameRunning = true;
+        isGamePaused = false;
+        gameLoop();
+    };
+
+    const endGame = () => {
+        cancelAnimationFrame(gameLoopInterval);
+        isGameRunning = false;
+        isGameOver = true;
+        saveHighScore(score);
+        document.getElementById('finalScore').textContent = score;
+        document.getElementById('gameOverScreen').classList.remove('hidden');
+    };
+    
+    // --- UI/Modal Functions ---
+    const showMessageBox = (title, content) => {
+        document.getElementById('messageBoxTitle').textContent = title;
+        document.getElementById('messageBoxContent').textContent = content;
+        document.getElementById('messageBox').classList.remove('hidden');
+    };
+
+    const closeMessageBox = () => {
+        document.getElementById('messageBox').classList.add('hidden');
+    };
+
+    const showQuestionModal = (question) => {
+        document.getElementById('questionText').textContent = question.text;
+        document.getElementById('answerInput').value = '';
+        document.getElementById('questionModal').classList.remove('hidden');
+    };
+
+    const hideQuestionModal = () => {
+        document.getElementById('questionModal').classList.add('hidden');
+    };
+    
+    // --- Event Listeners ---
+    document.getElementById('usernameSubmitBtn').addEventListener('click', () => {
+        const inputUsername = document.getElementById('usernameInput').value.trim();
+        if (inputUsername) {
+            username = inputUsername;
+            document.getElementById('usernamePrompt').classList.add('hidden');
+            document.getElementById('mainMenu').classList.remove('hidden');
+        } else {
+            showMessageBox("Oops!", "Please enter a username to continue.");
+        }
+    });
+
+    document.getElementById('playBtn').addEventListener('click', () => {
+        startGame();
+    });
+
+    document.getElementById('achievementsBtn').addEventListener('click', () => {
+        document.getElementById('mainMenu').classList.add('hidden');
+        document.getElementById('achievementsScreen').classList.remove('hidden');
+        displayHighScores(getHighScores().slice(0, 5));
+    });
+
+    document.getElementById('achievementsBackBtn').addEventListener('click', () => {
+        document.getElementById('achievementsScreen').classList.add('hidden');
+        document.getElementById('mainMenu').classList.remove('hidden');
+    });
+
+    document.getElementById('creditsBtn').addEventListener('click', () => {
+        document.getElementById('mainMenu').classList.add('hidden');
+        document.getElementById('creditsScreen').classList.remove('hidden');
+    });
+
+    document.getElementById('creditsBackBtn').addEventListener('click', () => {
+        document.getElementById('creditsScreen').classList.add('hidden');
+        document.getElementById('mainMenu').classList.remove('hidden');
+    });
+
+    document.getElementById('quitBtn').addEventListener('click', () => {
+        document.getElementById('mainMenu').classList.add('hidden');
+        document.getElementById('usernamePrompt').classList.remove('hidden');
+    });
+
+    document.getElementById('gameOverRestartBtn').addEventListener('click', () => {
+        document.getElementById('gameOverScreen').classList.add('hidden');
+        startGame();
+    });
+
+    document.getElementById('gameOverMenuBtn').addEventListener('click', () => {
+        document.getElementById('gameOverScreen').classList.add('hidden');
+        document.getElementById('mainMenu').classList.remove('hidden');
+    });
+    
+    document.getElementById('submitAnswerBtn').addEventListener('click', () => {
+        const answerInput = document.getElementById('answerInput');
+        const userAnswer = parseInt(answerInput.value, 10);
+        
+        if (!isNaN(userAnswer) && currentQuestion && userAnswer === currentQuestion.answer) {
+            score += 10;
+        } else {
+            score = Math.max(0, score - 5);
+        }
+        hideQuestionModal();
+        isGamePaused = false; // Unpause the game after the question is answered
+    });
+
+    document.addEventListener('keydown', (e) => {
+        keys[e.key] = true;
+        if ((e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w') && !player.isJumping) {
+            player.velocityY = -15;
+            player.isJumping = true;
+        }
+        if (e.key === 'g') {
+            bullets.push({
+                x: player.x + player.width,
+                y: player.y + (player.isDucking ? 12 : player.height / 2) - 5,
+                width: 10,
+                height: 10,
+                speed: 10
+            });
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        keys[e.key] = false;
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('messageBoxCloseBtn').addEventListener('click', closeMessageBox);
+    });
+
+    // --- On Window Load ---
+    window.onload = function() {
+        gameCanvas = document.getElementById('gameCanvas');
+        ctx = gameCanvas.getContext('2d');
+        
+        const resizeCanvas = () => {
+            gameWidth = Math.min(window.innerWidth * 0.9, 800);
+            gameHeight = Math.min(window.innerHeight * 0.8, 600);
+            gameCanvas.width = gameWidth;
+            gameCanvas.height = gameHeight;
+            draw(); // Redraw on resize
+        };
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+    };
 </script>
+
 </body>
 </html>
-
+```
