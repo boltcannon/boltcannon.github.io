@@ -1,709 +1,734 @@
-I've updated your HTML file with the necessary changes to save and retrieve high scores using `localStorage`.
-
-All you need to do is **copy and paste the entire code below** and replace the contents of your existing HTML file with it.
-
------
-
-### Key Changes Made
-
-  * **No Firebase:** The entire Firebase section has been removed, including the SDK imports and all related functions (`initFirebase`, `saveHighScore`, `setupHighScoresListener`).
-  * **Local Storage Functions:** New functions `getHighScores` and `saveHighScore` were created to handle data using the browser's built-in `localStorage`.
-  * **Persistent Scores:** When a user completes a game, their score is saved to `localStorage` under their username. The game will keep the user's highest score.
-  * **No Global Leaderboard:** Since data is stored locally, each user will only see their own scores and not a shared, global list.
-
-You can now open this single file in any web browser to play the game and see your high scores persist.
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Adventure</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <title>Knowledge Jump</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
         body {
-            font-family: 'Press Start 2P', cursive;
-            background-color: #87ceeb;
-            color: #fff;
+            font-family: 'Inter', sans-serif;
+            background-color: #0d0d1a;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
             overflow: hidden;
         }
-
-        .pixel-border {
-            border-style: solid;
-            border-image-slice: 3;
-            border-image-repeat: repeat;
-            border-image-width: 8px;
-            border-image-outset: 4px;
+        .game-container {
+            max-width: 900px;
+            width: 100%;
+            background-color: #1a1a2e;
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
-
-        .border-green-800 {
-            border-image-source: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><rect fill="%23166534" width="8" height="8"/><rect fill="%23166534" x="8" width="8" height="8"/><rect fill="%23166534" x="16" width="8" height="8"/><rect fill="%23166534" y="8" width="8" height="8"/><rect fill="%23166534" y="16" width="8" height="8"/><rect fill="%23166534" x="8" y="16" width="8" height="8"/><rect fill="%23166534" x="16" y="8" width="8" height="8"/><rect fill="%23166534" x="16" y="16" width="8" height="8"/></svg>');
+        canvas {
+            background-color: #2a2a44;
+            border-radius: 0.5rem;
+            display: block;
         }
-        .text-border {
-            -webkit-text-stroke-width: 2px;
-            -webkit-text-stroke-color: #000;
+        .ui-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: #2a2a44;
+            border-radius: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: bold;
         }
-        .pixelated {
-            image-rendering: pixelated;
+        .screen-container {
+            min-height: 450px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+            padding: 2rem;
+        }
+        .menu-button {
+            background-color: #ffcc00;
+            color: #1a1a2e;
+            font-weight: bold;
+            padding: 1rem 2rem;
+            border-radius: 9999px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+            cursor: pointer;
+            margin: 0.5rem 0;
+            width: 250px;
+        }
+        .menu-button:hover {
+            transform: scale(1.05);
+        }
+        #username-input {
+            background-color: #2a2a44;
+            border: 2px solid #5b3d2d;
+            padding: 0.5rem;
+            margin-top: 1rem;
+            border-radius: 0.5rem;
+            color: #fff;
+            text-align: center;
+        }
+        #username-input::placeholder {
+            color: #aaa;
+        }
+        .list-container {
+            width: 100%;
+            max-width: 400px;
+            text-align: left;
+            margin-top: 1rem;
+        }
+        .list-item {
+            background-color: #2a2a44;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        .list-item span:first-child {
+            font-weight: bold;
+        }
+        .list-item span:last-child {
+            color: #ffcc00;
+        }
+        .level-clear-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 10;
+        }
+        .level-clear-text {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #38a169;
+            animation: fadeInOut 2s forwards;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.5); }
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen">
+<body>
+    <div class="game-container">
+        <!-- Main Menu Screen -->
+        <div id="main-menu-screen" class="screen-container">
+            <h1 class="text-3xl md:text-5xl font-extrabold mb-4 text-yellow-500">Knowledge Jump</h1>
+            <p class="text-lg text-gray-300 mb-8">Jump on the correct platform to win!</p>
+            <button id="play-button" class="menu-button">Play</button>
+            <button id="achievements-button" class="menu-button">Achievements</button>
+            <button id="credits-button" class="menu-button">Credits</button>
+        </div>
 
-<div id="messageBox" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-2xl max-w-sm w-full text-center text-gray-800 border-8 border-green-800">
-        <h2 id="messageBoxTitle" class="text-xl font-bold mb-4"></h2>
-        <p id="messageBoxContent" class="mb-6"></p>
-        <button id="messageBoxCloseBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full shadow-lg">OK</button>
+        <!-- Play Screen (with username input) -->
+        <div id="play-screen" class="screen-container hidden">
+            <h2 class="text-3xl font-extrabold mb-4 text-yellow-500">Enter your name</h2>
+            <input type="text" id="username-input" placeholder="Your Name" class="text-center" />
+            <div class="controls-info mt-4">
+                Use **Left** and **Right** arrow keys to move.<br>
+                Use **Up** arrow key to jump.<br>
+                Use **Down** arrow key to duck.
+            </div>
+            <button id="start-game-button" class="menu-button mt-6">Start Game</button>
+            <button id="back-to-main-menu-button" class="menu-button">Back</button>
+        </div>
+
+        <!-- Achievements Screen -->
+        <div id="achievements-screen" class="screen-container hidden">
+            <h2 class="text-3xl font-extrabold mb-4 text-yellow-500">Top 5 High Scores</h2>
+            <div id="high-score-list" class="list-container">
+                <p>Loading...</p>
+            </div>
+            <button id="back-to-menu-from-achievements" class="menu-button mt-6">Back to Menu</button>
+        </div>
+
+        <!-- Credits Screen -->
+        <div id="credits-screen" class="screen-container hidden">
+            <h2 class="text-3xl font-extrabold mb-4 text-yellow-500">Credits</h2>
+            <div class="flex flex-col gap-2 text-lg">
+                <p>Sam</p>
+                <p>Aadi</p>
+                <p>Umang</p>
+                <p>Sid</p>
+            </div>
+            <button id="back-to-menu-from-credits" class="menu-button mt-6">Back to Menu</button>
+        </div>
+
+        <!-- Game UI -->
+        <div id="game-ui" class="hidden w-full">
+            <div class="ui-panel">
+                <span id="level-display">Level: 1</span>
+                <span id="score-display">Score: 0</span>
+            </div>
+            <canvas id="game-canvas"></canvas>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="screen-container hidden">
+            <h2 id="game-over-title" class="text-3xl md:text-4xl font-extrabold text-red-500 mb-4">Game Over!</h2>
+            <p class="text-xl mb-2">You reached level <span id="final-level"></span></p>
+            <p class="text-xl mb-6">Your final score is: <span id="final-score"></span></p>
+            <button id="restart-button" class="menu-button">Restart</button>
+            <button id="quit-button" class="menu-button">Quit to Menu</button>
+        </div>
     </div>
-</div>
 
-<div id="usernamePrompt" class="absolute inset-0 bg-blue-500 z-40 flex flex-col items-center justify-center text-white p-4">
-    <div class="bg-white p-8 rounded-xl shadow-2xl text-center text-gray-800 max-w-md w-full border-8 border-green-800">
-        <h1 class="text-3xl font-bold mb-4">Math Adventure!</h1>
-        <p class="mb-6 text-sm">Enter your username to begin.</p>
-        <input id="usernameInput" type="text" placeholder="Your Name" class="w-full p-3 rounded-lg border-2 border-gray-400 focus:outline-none focus:border-blue-500 mb-4 text-center">
-        <button id="usernameSubmitBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
-            Let's Go!
-        </button>
-    </div>
-</div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-<div id="mainMenu" class="absolute inset-0 bg-blue-500 z-30 flex-col items-center justify-center text-white hidden">
-    <h1 class="text-5xl md:text-6xl text-border mb-8">MATH ADVENTURE</h1>
-    <div class="space-y-4 w-full max-w-xs p-4">
-        <button id="playBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 px-6 rounded-full shadow-lg transition-transform transform hover:scale-105">
-            Start Game
-        </button>
-        <button id="achievementsBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 px-6 rounded-full shadow-lg transition-transform transform hover:scale-105">
-            High Scores
-        </button>
-        <button id="creditsBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 px-6 rounded-full shadow-lg transition-transform transform hover:scale-105">
-            Credits
-        </button>
-        <button id="quitBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-transform transform hover:scale-105">
-            Quit
-        </button>
-    </div>
-</div>
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-<div id="achievementsScreen" class="absolute inset-0 bg-blue-500 z-30 hidden flex-col items-center justify-center p-4">
-    <h1 class="text-4xl md:text-5xl text-border mb-8">High Scores</h1>
-    <div class="bg-white p-6 rounded-xl shadow-2xl text-gray-800 max-w-sm w-full border-8 border-green-800 mb-6">
-        <h2 class="text-xl font-bold mb-4 text-center">Top 5 Scores</h2>
-        <ul id="highScoresList" class="space-y-2 text-sm text-center">
-            </ul>
-    </div>
-    <div class="flex flex-col items-center mt-4">
-        <span class="text-sm">Scores are saved locally in your browser.</span>
-    </div>
-    <button id="achievementsBackBtn" class="absolute bottom-8 left-1/2 -translate-x-1/2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
-        Back
-    </button>
-</div>
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const mainMenuScreen = document.getElementById('main-menu-screen');
+        const playScreen = document.getElementById('play-screen');
+        const achievementsScreen = document.getElementById('achievements-screen');
+        const creditsScreen = document.getElementById('credits-screen');
+        const gameUI = document.getElementById('game-ui');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const playButton = document.getElementById('play-button');
+        const achievementsButton = document.getElementById('achievements-button');
+        const creditsButton = document.getElementById('credits-button');
+        const startGameButton = document.getElementById('start-game-button');
+        const restartButton = document.getElementById('restart-button');
+        const quitButton = document.getElementById('quit-button');
+        const backToMainMenuButton = document.getElementById('back-to-main-menu-button');
+        const backToMenuFromAchievementsButton = document.getElementById('back-to-menu-from-achievements');
+        const backToMenuFromCreditsButton = document.getElementById('back-to-menu-from-credits');
+        const usernameInput = document.getElementById('username-input');
+        const levelDisplay = document.getElementById('level-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const finalLevelDisplay = document.getElementById('final-level');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const highScoreList = document.getElementById('high-score-list');
 
-<div id="creditsScreen" class="absolute inset-0 bg-blue-500 z-30 hidden flex-col items-center justify-center p-4">
-    <h1 class="text-4xl md:text-5xl text-border mb-8">Credits</h1>
-    <div class="bg-white p-6 rounded-xl shadow-2xl text-gray-800 max-w-sm w-full border-8 border-green-800 mb-6 text-center">
-        <p class="mb-2">Game Design & Code by Gemini</p>
-        <p class="mb-2">Inspired by the classic Super Mario Bros.</p>
-        <p class="mb-2">Powered by JavaScript</p>
-    </div>
-    <button id="creditsBackBtn" class="absolute bottom-8 left-1/2 -translate-x-1/2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
-        Back
-    </button>
-</div>
+        canvas.width = 800;
+        canvas.height = 450;
 
-<div id="gameOverScreen" class="absolute inset-0 bg-gray-900 bg-opacity-75 z-40 hidden flex-col items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-2xl max-w-md w-full text-center text-gray-800 border-8 border-green-800">
-        <h2 class="text-3xl font-bold mb-4">Game Over!</h2>
-        <p class="mb-2">Your Score:</p>
-        <p id="finalScore" class="text-4xl font-bold mb-6 text-green-600"></p>
-        <button id="gameOverRestartBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
-            Play Again
-        </button>
-        <button id="gameOverMenuBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-full shadow-lg mt-4 transition-transform transform hover:scale-105">
-            Main Menu
-        </button>
-    </div>
-</div>
+        let game;
+        let animationFrameId;
+        let username = 'Anonymous';
+        let db;
 
-<div id="questionModal" class="absolute inset-0 bg-gray-900 bg-opacity-75 z-40 hidden flex-col items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-2xl max-w-md w-full text-center text-gray-800 border-8 border-green-800">
-        <h2 class="text-2xl font-bold mb-4">Question!</h2>
-        <p id="questionText" class="text-3xl font-bold mb-4"></p>
-        <input id="answerInput" type="number" placeholder="Enter answer" class="w-full p-3 rounded-lg border-2 border-gray-400 focus:outline-none focus:border-blue-500 mb-4 text-center">
-        <button id="submitAnswerBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
-            Submit
-        </button>
-    </div>
-</div>
+        const questions = [
+            { question: "What is the capital of France?", options: ["London", "Paris", "Berlin", "Rome"], answer: "Paris" },
+            { question: "What is the largest ocean on Earth?", options: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"], answer: "Pacific Ocean" },
+            { question: "What is the largest organ in the human body?", options: ["Heart", "Liver", "Skin", "Brain"], answer: "Skin" },
+            { question: "Who wrote 'Romeo and Juliet'?", options: ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"], answer: "William Shakespeare" },
+            { question: "What is the chemical symbol for gold?", options: ["Au", "Ag", "Fe", "Pb"], answer: "Au" },
+            { question: "Which gas do plants absorb from the atmosphere?", options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"], answer: "Carbon Dioxide" },
+            { question: "What is the currency of Japan?", options: ["Yen", "Euro", "Dollar", "Peso"], answer: "Yen" },
+            { question: "Which famous scientist developed the theory of relativity?", options: ["Isaac Newton", "Albert Einstein", "Stephen Hawking", "Marie Curie"], answer: "Albert Einstein" },
+            { question: "In what year did the Titanic sink?", options: ["1912", "1915", "1918", "1921"], answer: "1912" },
+            { question: "How many continents are there?", options: ["5", "6", "7", "8"], answer: "7" },
+            { question: "What is the smallest planet in our solar system?", options: ["Mars", "Mercury", "Pluto", "Earth"], answer: "Mercury" },
+            { question: "What is the boiling point of water in Celsius?", options: ["100°C", "0°C", "50°C", "200°C"], answer: "100°C" },
+            { question: "What is the longest river in the world?", options: ["Nile", "Amazon", "Yangtze", "Mississippi"], answer: "Nile" },
+            { question: "Who painted the Mona Lisa?", options: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Claude Monet"], answer: "Leonardo da Vinci" },
+            { question: "What is the capital of Australia?", options: ["Sydney", "Melbourne", "Canberra", "Perth"], answer: "Canberra" },
+            { question: "What is the square root of 64?", options: ["6", "7", "8", "9"], answer: "8" },
+            { question: "Which planet is known as the 'Red Planet'?", options: ["Mars", "Jupiter", "Venus", "Saturn"], answer: "Mars" },
+            { question: "Who was the first man to walk on the moon?", options: ["Yuri Gagarin", "Buzz Aldrin", "Neil Armstrong", "Michael Collins"], answer: "Neil Armstrong" },
+            { question: "What is the largest country in the world by land area?", options: ["China", "Canada", "USA", "Russia"], answer: "Russia" },
+            { question: "What is the primary gas found in the Earth's atmosphere?", options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Argon"], answer: "Nitrogen" },
+            { question: "What is the chemical symbol for oxygen?", options: ["O", "Ox", "O2", "Oz"], answer: "O" },
+            { question: "What is the hardest natural substance on Earth?", options: ["Gold", "Iron", "Diamond", "Quartz"], answer: "Diamond" },
+            { question: "Who wrote the play 'Hamlet'?", options: ["William Shakespeare", "Charles Dickens", "Leo Tolstoy", "Jane Austen"], answer: "William Shakespeare" },
+            { question: "What is the capital of Canada?", options: ["Toronto", "Vancouver", "Ottawa", "Montreal"], answer: "Ottawa" },
+            { question: "How many bones are in the adult human body?", options: ["206", "210", "200", "198"], answer: "206" },
+            { question: "What is the largest mammal?", options: ["Elephant", "Blue Whale", "Giraffe", "Lion"], answer: "Blue Whale" },
+            { question: "What is the name of the galaxy our solar system is in?", options: ["Andromeda", "Triangulum", "Milky Way", "Whirlpool"], answer: "Milky Way" },
+            { question: "What is the main ingredient in guacamole?", options: ["Tomato", "Avocado", "Onion", "Lime"], answer: "Avocado" },
+            { question: "What is the longest bone in the human body?", options: ["Tibia", "Fibula", "Femur", "Humerus"], answer: "Femur" },
+            { question: "What is the official language of Brazil?", options: ["Spanish", "Portuguese", "French", "English"], answer: "Portuguese" },
+            { question: "What is the capital of China?", options: ["Shanghai", "Beijing", "Hong Kong", "Tokyo"], answer: "Beijing" },
+            { question: "What is the most widely spoken language in the world?", options: ["English", "Mandarin Chinese", "Spanish", "Hindi"], answer: "Mandarin Chinese" },
+            { question: "What is the chemical formula for water?", options: ["H2O", "CO2", "O2", "NaCl"], answer: "H2O" },
+            { question: "Which continent is the Sahara Desert located on?", options: ["Asia", "Australia", "Africa", "South America"], answer: "Africa" },
+            { question: "What is the largest city in the world by population?", options: ["Tokyo", "Delhi", "Shanghai", "Mexico City"], answer: "Tokyo" },
+            { question: "Who was the first President of the United States?", options: ["Thomas Jefferson", "Abraham Lincoln", "George Washington", "John Adams"], answer: "George Washington" },
+            { question: "What is the value of pi?", options: ["3.14", "3.12", "3.16", "3.18"], answer: "3.14" },
+            { question: "What is the primary component of the sun?", options: ["Oxygen", "Helium", "Hydrogen", "Carbon"], answer: "Hydrogen" },
+            { question: "What is the most common element in the universe?", options: ["Helium", "Oxygen", "Hydrogen", "Carbon"], answer: "Hydrogen" },
+            { question: "What is the capital of Italy?", options: ["Venice", "Milan", "Rome", "Naples"], answer: "Rome" },
+            { question: "What is the largest country in South America?", options: ["Argentina", "Brazil", "Colombia", "Peru"], answer: "Brazil" },
+            { question: "Which famous scientist formulated the laws of motion and universal gravitation?", options: ["Galileo Galilei", "Isaac Newton", "Johannes Kepler", "Nikola Tesla"], answer: "Isaac Newton" },
+            { question: "What is the largest state in the USA by land area?", options: ["Texas", "California", "Alaska", "Florida"], answer: "Alaska" },
+            { question: "What is the currency of India?", options: ["Yen", "Dollar", "Rupee", "Euro"], answer: "Rupee" },
+            { question: "What is the capital of Japan?", options: ["Kyoto", "Osaka", "Tokyo", "Hiroshima"], answer: "Tokyo" },
+            { question: "How many planets are in our solar system?", options: ["7", "8", "9", "10"], answer: "8" },
+            { question: "Which is the tallest mountain in the world?", options: ["Mount Everest", "K2", "Kangchenjunga", "Lhotse"], answer: "Mount Everest" },
+            { question: "What is the name of the largest rainforest in the world?", options: ["Congo", "Valdivian", "Amazon", "Daintree"], answer: "Amazon" },
+            { question: "What is the capital of Germany?", options: ["Hamburg", "Munich", "Frankfurt", "Berlin"], answer: "Berlin" },
+            { question: "What is the powerhouse of the cell?", options: ["Nucleus", "Ribosome", "Mitochondria", "Cytoplasm"], answer: "Mitochondria" },
+            { question: "Who was the first woman to win a Nobel Prize?", options: ["Mother Teresa", "Marie Curie", "Rosalind Franklin", "Jane Goodall"], answer: "Marie Curie" },
+            { question: "What is the chemical symbol for table salt?", options: ["NaCl", "KCl", "H2O", "CO2"], answer: "NaCl" },
+            { question: "What is the capital of Egypt?", options: ["Luxor", "Cairo", "Giza", "Alexandria"], answer: "Cairo" },
+            { question: "What is the main function of the kidneys?", options: ["Digestion", "Filtering blood", "Pumping blood", "Breathing"], answer: "Filtering blood" },
+            { question: "Which country is home to the kangaroo?", options: ["New Zealand", "Australia", "South Africa", "Brazil"], answer: "Australia" },
+            { question: "Who wrote 'Pride and Prejudice'?", options: ["Charlotte Bronte", "Jane Austen", "Emily Bronte", "Mary Shelley"], answer: "Jane Austen" },
+            { question: "What is the capital of South Korea?", options: ["Busan", "Daegu", "Incheon", "Seoul"], answer: "Seoul" },
+            { question: "Which gas is most abundant in the air we breathe?", options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Helium"], answer: "Nitrogen" },
+            { question: "What is the largest bird in the world?", options: ["Eagle", "Ostrich", "Emu", "Penguin"], answer: "Ostrich" },
+            { question: "How many years are in a millennium?", options: ["100", "500", "1000", "5000"], answer: "1000" },
+            { question: "Who painted the Sistine Chapel ceiling?", options: ["Raphael", "Michelangelo", "Leonardo da Vinci", "Donatello"], answer: "Michelangelo" },
+            { question: "What is the chemical symbol for iron?", options: ["Ir", "Fe", "In", "Au"], answer: "Fe" },
+            { question: "What is the main ingredient of bread?", options: ["Sugar", "Flour", "Salt", "Yeast"], answer: "Flour" },
+            { question: "How many sides does a hexagon have?", options: ["5", "6", "7", "8"], answer: "6" },
+            { question: "What is the capital of Spain?", options: ["Barcelona", "Madrid", "Seville", "Valencia"], answer: "Madrid" },
+            { question: "What is the name of the largest desert in the world?", options: ["Gobi", "Kalahari", "Sahara", "Antarctic"], answer: "Antarctic" },
+            { question: "Who was the first man to fly in space?", options: ["Neil Armstrong", "Yuri Gagarin", "Buzz Aldrin", "Alan Shepard"], answer: "Yuri Gagarin" },
+            { question: "What is the capital of Russia?", options: ["St. Petersburg", "Moscow", "Kazan", "Sochi"], answer: "Moscow" },
+            { question: "What is the main purpose of photosynthesis in plants?", options: ["To release oxygen", "To create food", "To absorb water", "To grow"], answer: "To create food" },
+            { question: "What is the primary color of a ripe banana?", options: ["Red", "Green", "Blue", "Yellow"], answer: "Yellow" },
+            { question: "Which organ pumps blood throughout the body?", options: ["Lungs", "Brain", "Heart", "Stomach"], answer: "Heart" },
+            { question: "What is the chemical symbol for helium?", options: ["He", "H", "Hl", "Hm"], answer: "He" },
+            { question: "What is the capital of the United Kingdom?", options: ["Manchester", "London", "Edinburgh", "Cardiff"], answer: "London" },
+            { question: "What is the smallest continent by land area?", options: ["Europe", "Australia", "Antarctica", "South America"], answer: "Australia" },
+            { question: "What is the capital of Mexico?", options: ["Cancún", "Guadalajara", "Mexico City", "Puebla"], answer: "Mexico City" },
+            { question: "How many legs does a spider have?", options: ["6", "8", "10", "12"], answer: "8" },
+            { question: "What is the fastest land animal?", options: ["Lion", "Cheetah", "Gazelle", "Leopard"], answer: "Cheetah" },
+            { question: "What is the world's most populous country?", options: ["China", "India", "USA", "Indonesia"], answer: "India" },
+            { question: "What is the capital of Thailand?", options: ["Chiang Mai", "Phuket", "Bangkok", "Pattaya"], answer: "Bangkok" },
+            { question: "Which famous pyramid is located in Egypt?", options: ["Pyramid of Djoser", "Pyramid of Khafre", "Great Pyramid of Giza", "Red Pyramid"], answer: "Great Pyramid of Giza" },
+            { question: "What is the chemical symbol for silver?", options: ["Ag", "Au", "Si", "Fe"], answer: "Ag" },
+            { question: "What is the capital of Greece?", options: ["Sparta", "Thebes", "Athens", "Corinth"], answer: "Athens" },
+            { question: "Which country is famous for the Eiffel Tower?", options: ["Italy", "Spain", "France", "Germany"], answer: "France" },
+            { question: "What is the largest animal on Earth?", options: ["Elephant", "Giraffe", "Blue Whale", "Great White Shark"], answer: "Blue Whale" },
+            { question: "How many bones are in the human hand?", options: ["25", "27", "29", "31"], answer: "27" },
+            { question: "What is the smallest continent in the world?", options: ["Asia", "Europe", "Australia", "Africa"], answer: "Australia" },
+            { question: "What is the capital of Sweden?", options: ["Gothenburg", "Malmö", "Uppsala", "Stockholm"], answer: "Stockholm" },
+            { question: "What is the chemical formula for salt?", options: ["NaCl", "KCl", "H2O", "CO2"], answer: "NaCl" },
+            { question: "Who was the first American in space?", options: ["John Glenn", "Alan Shepard", "Neil Armstrong", "Buzz Aldrin"], answer: "Alan Shepard" },
+            { question: "What is the capital of Argentina?", options: ["Buenos Aires", "Cordoba", "Rosario", "Mendoza"], answer: "Buenos Aires" },
+            { question: "What is the hardest mineral?", options: ["Talc", "Gypsum", "Diamond", "Quartz"], answer: "Diamond" },
+            { question: "What is the largest country in Africa by area?", options: ["Sudan", "Algeria", "Democratic Republic of Congo", "Libya"], answer: "Algeria" },
+            { question: "How many teeth does an adult human have?", options: ["28", "30", "32", "34"], answer: "32" },
+            { question: "What is the capital of New Zealand?", options: ["Auckland", "Christchurch", "Wellington", "Queenstown"], answer: "Wellington" },
+            { question: "What is the largest organ in the human body?", options: ["Brain", "Liver", "Lungs", "Skin"], answer: "Skin" },
+            { question: "Who is known as the 'Father of modern physics'?", options: ["Isaac Newton", "Galileo Galilei", "Albert Einstein", "Stephen Hawking"], answer: "Albert Einstein" },
+            { question: "What is the capital of Peru?", options: ["Cusco", "Lima", "Arequipa", "Trujillo"], answer: "Lima" },
+            { question: "How many legs does a spider have?", options: ["4", "6", "8", "10"], answer: "8" },
+            { question: "What is the longest river in the United States?", options: ["Mississippi River", "Missouri River", "Colorado River", "Rio Grande"], answer: "Missouri River" },
+            { question: "What is the largest country by population in Africa?", options: ["Egypt", "Nigeria", "Ethiopia", "South Africa"], answer: "Nigeria" },
+            { question: "What is the capital of Brazil?", options: ["Rio de Janeiro", "Sao Paulo", "Brasilia", "Salvador"], answer: "Brasilia" },
+            { question: "Who was the first person to circumnavigate the Earth?", options: ["Christopher Columbus", "Ferdinand Magellan", "Vasco da Gama", "James Cook"], answer: "Ferdinand Magellan" },
+            { question: "How many oceans are there on Earth?", options: ["4", "5", "6", "7"], answer: "5" },
+            { question: "What is the highest mountain in North America?", options: ["Mount Rainier", "Mount Denali", "Mount Logan", "Pico de Orizaba"], answer: "Mount Denali" },
+            { question: "What is the capital of South Africa?", options: ["Cape Town", "Pretoria", "Johannesburg", "Durban"], answer: "Pretoria" },
+            { question: "What is the largest planet in our solar system?", options: ["Saturn", "Jupiter", "Uranus", "Neptune"], answer: "Jupiter" },
+            { question: "How many stars are on the flag of the USA?", options: ["40", "50", "52", "55"], answer: "50" }
+        ];
 
-<div id="gameContainer" class="hidden relative w-full h-full flex items-center justify-center">
-    <div class="absolute top-4 left-4 p-4 rounded-xl bg-gray-800 bg-opacity-75 text-white font-bold z-10">
-        <p>Score: <span id="gameScore">0</span></p>
-        <p>Username: <span id="gameUsername"></span></p>
-    </div>
-    <canvas id="gameCanvas" class="bg-blue-300 rounded-lg shadow-2xl"></canvas>
-</div>
-
-<script>
-    // Game State Variables
-    let gameCanvas, ctx;
-    let username = '';
-    let score = 0;
-    let gameLoopInterval;
-    let isGameOver = false;
-    let currentQuestion = null;
-    let isGamePaused = false;
-    let enemiesDefeatedCount = 0;
-    let currentLevel = 1;
-
-    // Player State
-    const player = {
-        x: 50,
-        y: 0,
-        width: 32,
-        height: 48,
-        speed: 5,
-        velocityY: 0,
-        isJumping: false,
-        isDucking: false
-    };
-
-    // Game Environment
-    const gravity = 0.5;
-    let gameWidth = 800;
-    let gameHeight = 600;
-    let isGameRunning = false;
-    let keys = {};
-    const groundHeight = 50;
-    const enemies = [];
-    const bullets = [];
-    let enemySpawnTimer = 0;
-    
-    // Platforms with holes
-    const platforms = [];
-
-    // --- High Score Logic (using localStorage) ---
-    const HIGH_SCORES_KEY = 'mathAdventureHighScores';
-
-    const getHighScores = () => {
-        try {
-            const scores = JSON.parse(localStorage.getItem(HIGH_SCORES_KEY) || '[]');
-            // Sort in descending order
-            scores.sort((a, b) => b.score - a.score);
-            return scores;
-        } catch (error) {
-            console.error("Error loading high scores from localStorage:", error);
-            return [];
-        }
-    };
-
-    const saveHighScore = (finalScore) => {
-        const scores = getHighScores();
-        const now = Date.now();
-
-        // Find the current user's entry
-        const userIndex = scores.findIndex(s => s.username === username);
-
-        if (userIndex !== -1) {
-            // If user exists, update their score if the new one is higher
-            if (finalScore > scores[userIndex].score) {
-                scores[userIndex].score = finalScore;
-                scores[userIndex].timestamp = now;
+        class Player {
+            constructor() {
+                this.baseHeight = 30;
+                this.duckHeight = 15;
+                this.width = 16;
+                this.height = this.baseHeight;
+                this.x = 50;
+                this.y = canvas.height - 50;
+                this.vx = 0;
+                this.vy = 0;
+                this.gravity = 0.5;
+                this.isJumping = false;
+                this.isDucking = false;
+                this.rotation = 0;
+                this.legOffset = 0;
+                this.legDirection = 1;
             }
-        } else {
-            // Otherwise, add a new entry for the user
-            scores.push({
-                username: username,
-                score: finalScore,
-                timestamp: now
-            });
-        }
 
-        // Save the updated list to localStorage
-        try {
-            localStorage.setItem(HIGH_SCORES_KEY, JSON.stringify(scores));
-        } catch (error) {
-            console.error("Error saving high scores to localStorage:", error);
-        }
-        
-        // Refresh the displayed list
-        displayHighScores(scores.slice(0, 5));
-    };
+            draw() {
+                ctx.save();
+                ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                ctx.rotate(this.rotation);
 
-    const displayHighScores = (scores) => {
-        const highScoresList = document.getElementById('highScoresList');
-        highScoresList.innerHTML = '';
-        
-        if (scores.length === 0) {
-            highScoresList.innerHTML = '<li class="text-sm text-gray-500">No scores recorded yet.</li>';
-            return;
-        }
-        
-        scores.forEach((score, index) => {
-            const li = document.createElement('li');
-            li.textContent = `${index + 1}. ${score.username}: ${score.score}`;
-            highScoresList.appendChild(li);
-        });
-    };
+                // Body
+                ctx.fillStyle = '#b91c1c';
+                ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
 
-    // --- Game Logic Functions ---
-    const spawnEnemy = () => {
-        enemies.push({
-            x: gameWidth,
-            y: gameHeight - groundHeight - 32,
-            width: 32,
-            height: 32,
-            speed: Math.random() * 2 + 1,
-            color: '#008000'
-        });
-    };
-    
-    const advanceToNextFrame = () => {
-        enemiesDefeatedCount = 0;
-        enemies.length = 0;
-        bullets.length = 0;
-        player.x = 50;
-        player.y = 0;
-        currentLevel++;
-        createPlatforms();
-        showMessageBox("Level Complete!", `You've advanced to Level ${currentLevel}!`);
-    };
+                // Head
+                ctx.fillStyle = '#fef3c7';
+                ctx.beginPath();
+                ctx.arc(0, -this.height / 2 - 8, 8, 0, Math.PI * 2);
+                ctx.fill();
 
-    const generateQuestion = (difficulty) => {
-        let num1, num2;
-        const operation = ['+', '-', '*', '/'][Math.floor(Math.random() * 4)];
-        let answer;
+                // Eyes
+                ctx.fillStyle = '#1a1a2e';
+                ctx.beginPath();
+                ctx.arc(-3, -this.height / 2 - 8, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(3, -this.height / 2 - 8, 1.5, 0, Math.PI * 2);
+                ctx.fill();
 
-        if (difficulty < 2) {
-            num1 = Math.floor(Math.random() * 10) + 1;
-            num2 = Math.floor(Math.random() * 10) + 1;
-        } else if (difficulty < 4) {
-            num1 = Math.floor(Math.random() * 20) + 1;
-            num2 = Math.floor(Math.random() * 20) + 1;
-        } else {
-            num1 = Math.floor(Math.random() * 50) + 1;
-            num2 = Math.floor(Math.random() * 50) + 1;
-        }
+                // Legs
+                ctx.fillStyle = '#2563eb';
+                const legWidth = this.width / 2 - 2;
+                const legHeight = 5;
+                ctx.fillRect(-this.width / 2 + 1 + this.legOffset, this.height / 2, legWidth, legHeight);
+                ctx.fillRect(1 - this.legOffset, this.height / 2, legWidth, legHeight);
 
-        switch (operation) {
-            case '+':
-                answer = num1 + num2;
-                break;
-            case '-':
-                answer = num1 - num2;
-                break;
-            case '*':
-                num1 = Math.floor(Math.random() * 12) + 1;
-                num2 = Math.floor(Math.random() * 12) + 1;
-                answer = num1 * num2;
-                break;
-            case '/':
-                num2 = Math.floor(Math.random() * 10) + 1;
-                num1 = num2 * (Math.floor(Math.random() * 10) + 1);
-                answer = num1 / num2;
-                break;
-        }
-
-        return { text: `${num1} ${operation} ${num2} = ?`, answer: answer };
-    };
-
-    const checkCollision = (obj1, obj2) => {
-        return obj1.x < obj2.x + obj2.width &&
-                obj1.x + obj1.width > obj2.x &&
-                obj1.y < obj2.y + obj2.height &&
-                obj1.y + obj1.height > obj2.y;
-    };
-    
-    // --- Game Engine and Rendering ---
-    const drawPlayer = () => {
-        // Body (red shirt)
-        ctx.fillStyle = '#ff0000';
-        if (player.isDucking) {
-            ctx.fillRect(player.x, player.y + 24, 32, 24);
-        } else {
-            ctx.fillRect(player.x, player.y + 16, 32, 32);
-        }
-
-        // Head (brown hair)
-        ctx.fillStyle = '#8B4513';
-        if (player.isDucking) {
-            ctx.fillRect(player.x + 8, player.y + 8, 16, 16);
-        } else {
-            ctx.fillRect(player.x + 8, player.y, 16, 16);
-        }
-        
-        // Face (skin tone)
-        ctx.fillStyle = '#ffdbac';
-        if (player.isDucking) {
-            ctx.fillRect(player.x + 8, player.y + 16, 16, 8);
-        } else {
-            ctx.fillRect(player.x + 8, player.y + 8, 16, 8);
-        }
-        
-        // Legs (blue pants)
-        ctx.fillStyle = '#0000ff';
-        if (player.isDucking) {
-            ctx.fillRect(player.x, player.y + 32, 16, 16);
-            ctx.fillRect(player.x + 16, player.y + 32, 16, 16);
-        } else {
-            ctx.fillRect(player.x, player.y + 32, 16, 16);
-            ctx.fillRect(player.x + 16, player.y + 32, 16, 16);
-        }
-    };
-
-    const drawBullets = () => {
-        ctx.fillStyle = '#ffff00';
-        bullets.forEach(bullet => {
-            ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-        });
-    };
-
-    const drawEnemies = () => {
-        enemies.forEach(enemy => {
-            ctx.fillStyle = enemy.color;
-            ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-        });
-    };
-
-    const drawPlatforms = () => {
-        ctx.fillStyle = '#654321';
-        platforms.forEach(platform => {
-            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-        });
-    };
-
-    const update = () => {
-        if (!isGameRunning || isGameOver || isGamePaused) return;
-        
-        // Player movement
-        player.velocityY += gravity;
-        player.y += player.velocityY;
-
-        // Apply horizontal movement
-        if (keys['ArrowLeft'] || keys['a']) {
-            player.x -= player.speed;
-        }
-        if (keys['ArrowRight'] || keys['d']) {
-            player.x += player.speed;
-        }
-        
-        // Ducking logic
-        if (keys['ArrowDown'] || keys['s']) {
-            player.isDucking = true;
-            player.height = 24;
-        } else {
-            player.isDucking = false;
-            player.height = 48;
-        }
-
-        // Keep player on screen
-        if (player.x < 0) player.x = 0;
-        if (player.x + player.width > gameWidth) player.x = gameWidth - player.width;
-        
-        // Player-platform collision
-        let onGround = false;
-        for (const platform of platforms) {
-            if (player.y + player.height >= platform.y && player.y + player.height <= platform.y + platform.height &&
-                player.x + player.width > platform.x && player.x < platform.x + platform.width) {
-                
-                player.y = platform.y - player.height;
-                player.velocityY = 0;
-                player.isJumping = false;
-                onGround = true;
-                break;
+                ctx.restore();
             }
-        }
-        if (!onGround && player.y + player.height < gameHeight) {
-            player.isJumping = true;
-        }
 
-        // End game if player falls off screen
-        if (player.y > gameHeight) {
-            endGame();
-            return;
-        }
-        
-        // Update bullets
-        for (let i = bullets.length - 1; i >= 0; i--) {
-            bullets[i].x += bullets[i].speed;
-            if (bullets[i].x > gameWidth) {
-                bullets.splice(i, 1);
-            }
-        }
-        
-        // Update enemies
-        for (let i = enemies.length - 1; i >= 0; i--) {
-            enemies[i].x -= enemies[i].speed;
-            if (enemies[i].x + enemies[i].width < 0) {
-                enemies.splice(i, 1);
-            }
-        }
+            update() {
+                this.vy += this.gravity;
+                this.x += this.vx;
+                this.y += this.vy;
 
-        // Bullet-enemy collision
-        for (let i = bullets.length - 1; i >= 0; i--) {
-            for (let j = enemies.length - 1; j >= 0; j--) {
-                if (checkCollision(bullets[i], enemies[j])) {
-                    bullets.splice(i, 1);
-                    enemies.splice(j, 1);
-                    enemiesDefeatedCount++;
-                    if (enemiesDefeatedCount >= 4) {
-                        advanceToNextFrame();
+                // Adjust player height for ducking
+                if (this.isDucking) {
+                    this.height = this.duckHeight;
+                } else {
+                    this.height = this.baseHeight;
+                }
+
+                // Update animations
+                if (this.isJumping) {
+                    this.rotation += 0.1;
+                } else if (!this.isJumping && this.rotation !== 0) {
+                    this.rotation = 0;
+                }
+
+                if (Math.abs(this.vx) > 0 && !this.isJumping) {
+                    this.legOffset += 0.5 * this.legDirection;
+                    if (this.legOffset > 3 || this.legOffset < -3) {
+                        this.legDirection *= -1;
                     }
-                    currentQuestion = generateQuestion(Math.floor(score / 50));
-                    showQuestionModal(currentQuestion);
-                    isGamePaused = true;
-                    break;
+                } else {
+                    this.legOffset = 0;
+                }
+                
+                // Keep player within canvas bounds
+                if (this.x < 0) this.x = 0;
+                if (this.x + this.width > canvas.width) this.x = canvas.width - this.width;
+            }
+        }
+
+        class Platform {
+            constructor(x, y, width, height, isCorrect = false, text = '') {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.isCorrect = isCorrect;
+                this.text = text;
+            }
+
+            draw() {
+                // All platforms are the same color now
+                ctx.fillStyle = '#5b3d2d'; 
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                if (this.text) {
+                    ctx.fillStyle = '#fff';
+                    ctx.textAlign = 'center';
+                    ctx.font = '16px Inter';
+                    ctx.fillText(this.text, this.x + this.width / 2, this.y - 10);
                 }
             }
         }
 
-        // Player-enemy collision
-        for (let i = enemies.length - 1; i >= 0; i--) {
-            if (checkCollision(player, enemies[i])) {
-                endGame();
+        class Game {
+            constructor() {
+                this.player = new Player();
+                this.platforms = [];
+                this.level = 0;
+                this.score = 0;
+                this.gameOver = false;
+                this.keys = {};
+                this.currentQuestion = null;
+                this.shuffledQuestions = shuffleArray([...questions]);
+                this.isLevelCleared = false;
+                
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.key] = true;
+                    if (e.key === 'ArrowDown') {
+                        this.player.isDucking = true;
+                    }
+                });
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.key] = false;
+                    if (e.key === 'ArrowDown') {
+                        this.player.isDucking = false;
+                    }
+                });
+
+                this.generateLevel();
+                this.gameLoop();
+            }
+
+            generateLevel() {
+                this.level++;
+                this.platforms = [];
+                this.currentQuestion = this.shuffledQuestions[this.level - 1];
+                if (!this.currentQuestion) {
+                    this.endGame(true);
+                    return;
+                }
+
+                // Reset player position for new level
+                this.player.x = 50;
+                this.player.y = canvas.height - 50;
+                this.player.vx = 0;
+                this.player.vy = 0;
+
+                this.platforms.push(new Platform(0, canvas.height - 20, canvas.width, 20)); // Ground platform
+                
+                const questionOptions = shuffleArray([...this.currentQuestion.options]);
+                
+                // I've adjusted the platform width to make it easier to land on
+                const platformWidth = 200; 
+                const platformHeight = 20;
+                const horizontalSpacing = (canvas.width - (platformWidth * questionOptions.length)) / (questionOptions.length + 1);
+                let currentX = horizontalSpacing;
+
+                // Create platforms for the options in a single horizontal line
+                for (let i = 0; i < questionOptions.length; i++) {
+                    const optionText = questionOptions[i];
+                    const isCorrect = optionText === this.currentQuestion.answer;
+                    
+                    this.platforms.push(new Platform(
+                        currentX,
+                        canvas.height - 150,
+                        platformWidth,
+                        platformHeight,
+                        isCorrect,
+                        optionText
+                    ));
+                    currentX += platformWidth + horizontalSpacing;
+                }
+            }
+
+            gameLoop() {
+                if (this.gameOver) {
+                    cancelAnimationFrame(animationFrameId);
+                    return;
+                }
+
+                if (!this.isLevelCleared) {
+                    this.update();
+                    this.draw();
+                } else {
+                    // Draw "Level Cleared!" animation
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#38a169';
+                    ctx.textAlign = 'center';
+                    ctx.font = '50px Inter';
+                    ctx.fillText("Level Cleared!", canvas.width / 2, canvas.height / 2);
+                }
+
+                animationFrameId = requestAnimationFrame(() => this.gameLoop());
+            }
+
+            update() {
+                this.player.update();
+
+                // Player movement
+                this.player.vx = 0;
+                if (this.keys['ArrowLeft']) this.player.vx = -5;
+                if (this.keys['ArrowRight']) this.player.vx = 5;
+
+                // Player jump
+                if (this.keys['ArrowUp'] && !this.player.isJumping) {
+                    this.player.vy = -12;
+                    this.player.isJumping = true;
+                }
+                
+                // Collision detection
+                let onPlatform = false;
+                this.platforms.forEach(platform => {
+                    if (this.player.vy >= 0 &&
+                        this.player.y + this.player.height >= platform.y &&
+                        this.player.y + this.player.height <= platform.y + this.player.height &&
+                        this.player.x + this.player.width > platform.x &&
+                        this.player.x < platform.x + platform.width) {
+                        
+                        this.player.y = platform.y - this.player.height;
+                        this.player.vy = 0;
+                        this.player.isJumping = false;
+                        onPlatform = true;
+
+                        // Check if the player landed on a question platform
+                        if (platform.text) {
+                            this.checkAnswer(platform);
+                        }
+                    }
+                });
+
+                // Game over if player falls off the bottom
+                if (this.player.y > canvas.height) {
+                    this.endGame(false);
+                }
+                
+                // Update UI
+                levelDisplay.textContent = `Level: ${this.level}`;
+                scoreDisplay.textContent = `Score: ${this.score}`;
+            }
+            
+            async checkAnswer(platform) {
+                if (platform.isCorrect) {
+                    this.score += 100;
+                    this.isLevelCleared = true;
+                    setTimeout(() => {
+                        this.isLevelCleared = false;
+                        this.generateLevel();
+                    }, 1500); // 1.5 second animation
+                } else {
+                    this.endGame(false);
+                }
+            }
+
+            draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                this.drawQuestion();
+                this.platforms.forEach(p => p.draw());
+                this.player.draw();
+            }
+            
+            drawQuestion() {
+                if (!this.currentQuestion) return;
+                ctx.fillStyle = '#ffcc00';
+                ctx.textAlign = 'center';
+                ctx.font = '24px Inter';
+                ctx.fillText(this.currentQuestion.question, canvas.width / 2, 50);
+            }
+
+            async endGame(isWinner) {
+                this.gameOver = true;
+                gameUI.classList.add('hidden');
+                gameOverScreen.classList.remove('hidden');
+
+                if (isWinner) {
+                    document.getElementById('game-over-title').textContent = 'Congratulations!';
+                    finalLevelDisplay.textContent = 'All levels completed!';
+                } else {
+                    document.getElementById('game-over-title').textContent = 'Game Over!';
+                    finalLevelDisplay.textContent = this.level;
+                }
+                finalScoreDisplay.textContent = this.score;
+
+                // Save score to database
+                const scoreData = { username: username, score: this.score };
+                try {
+                    const highScoreDocRef = doc(db, `artifacts/${appId}/public/data/high_scores`, 'top_scores');
+                    const docSnap = await getDoc(highScoreDocRef);
+                    let scores = docSnap.exists() ? docSnap.data().scores : [];
+                    scores.push(scoreData);
+                    scores.sort((a, b) => b.score - a.score);
+                    scores = scores.slice(0, 5); // Keep only the top 5
+                    await setDoc(highScoreDocRef, { scores: scores });
+                    console.log("Score saved!");
+                } catch (error) {
+                    console.error("Error saving score:", error);
+                }
+            }
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // UI Navigation Functions
+        function showScreen(screen) {
+            mainMenuScreen.classList.add('hidden');
+            playScreen.classList.add('hidden');
+            achievementsScreen.classList.add('hidden');
+            creditsScreen.classList.add('hidden');
+            gameUI.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            screen.classList.remove('hidden');
+        }
+
+        function handleStartGame() {
+            username = usernameInput.value || 'Anonymous';
+            showScreen(gameUI);
+            game = new Game();
+        }
+
+        async function fetchHighScores() {
+            showScreen(achievementsScreen);
+            highScoreList.innerHTML = '<p>Loading...</p>';
+            try {
+                const highScoreDocRef = doc(db, `artifacts/${appId}/public/data/high_scores`, 'top_scores');
+                const docSnap = await getDoc(highScoreDocRef);
+                const scores = docSnap.exists() ? docSnap.data().scores : [];
+                
+                if (scores.length > 0) {
+                    highScoreList.innerHTML = '';
+                    scores.forEach((score, index) => {
+                        const scoreItem = document.createElement('div');
+                        scoreItem.className = 'list-item';
+                        scoreItem.innerHTML = `<span>${index + 1}. ${score.username}</span><span>${score.score}</span>`;
+                        highScoreList.appendChild(scoreItem);
+                    });
+                } else {
+                    highScoreList.innerHTML = '<p class="text-center">No high scores yet!</p>';
+                }
+
+            } catch (error) {
+                console.error("Error fetching high scores:", error);
+                highScoreList.innerHTML = '<p class="text-center">Error loading scores.</p>';
             }
         }
         
-        // Enemy spawning
-        enemySpawnTimer++;
-        if (enemySpawnTimer > 180) { // Spawn every 3 seconds (60 FPS * 3)
-            spawnEnemy();
-            enemySpawnTimer = 0;
-        }
-    };
-    
-    const draw = () => {
-        if (!isGameRunning) return;
+        // Event Listeners
+        playButton.addEventListener('click', () => showScreen(playScreen));
+        achievementsButton.addEventListener('click', fetchHighScores);
+        creditsButton.addEventListener('click', () => showScreen(creditsScreen));
+        startGameButton.addEventListener('click', handleStartGame);
+        restartButton.addEventListener('click', handleStartGame);
+        quitButton.addEventListener('click', () => showScreen(mainMenuScreen));
+        backToMainMenuButton.addEventListener('click', () => showScreen(mainMenuScreen));
+        backToMenuFromAchievementsButton.addEventListener('click', () => showScreen(mainMenuScreen));
+        backToMenuFromCreditsButton.addEventListener('click', () => showScreen(mainMenuScreen));
         
-        ctx.clearRect(0, 0, gameWidth, gameHeight);
-        
-        // Draw background
-        ctx.fillStyle = '#87ceeb';
-        ctx.fillRect(0, 0, gameWidth, gameHeight);
-        
-        // Draw platforms
-        drawPlatforms();
-
-        // Draw game elements
-        drawEnemies();
-        drawBullets();
-        drawPlayer();
-
-        // Draw score and username
-        const scoreElement = document.getElementById('gameScore');
-        if (scoreElement) {
-            scoreElement.textContent = score;
+        // Initial setup
+        async function initFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                db = getFirestore(app);
+                setLogLevel('debug');
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                console.log("Firebase initialized and user signed in:", auth.currentUser.uid);
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+            }
         }
-        const usernameElement = document.getElementById('gameUsername');
-        if (usernameElement) {
-            usernameElement.textContent = username;
-        }
-    };
-    
-    const gameLoop = () => {
-        if (isGamePaused) {
-            gameLoopInterval = requestAnimationFrame(gameLoop);
-            return;
-        }
-        update();
-        draw();
-        gameLoopInterval = requestAnimationFrame(gameLoop);
-    };
 
-    const createPlatforms = () => {
-        platforms.length = 0;
-        const groundY = gameHeight - groundHeight;
-        
-        // Create platforms based on the current level
-        switch(currentLevel) {
-            case 1:
-                platforms.push({ x: 0, y: groundY, width: 250, height: groundHeight });
-                platforms.push({ x: 400, y: groundY, width: 100, height: groundHeight });
-                platforms.push({ x: 600, y: groundY, width: 200, height: groundHeight });
-                break;
-            case 2:
-                platforms.push({ x: 0, y: groundY, width: 150, height: groundHeight });
-                platforms.push({ x: 250, y: groundY, width: 150, height: groundHeight });
-                platforms.push({ x: 500, y: groundY, width: 300, height: groundHeight });
-                break;
-            case 3:
-                platforms.push({ x: 0, y: groundY, width: 100, height: groundHeight });
-                platforms.push({ x: 200, y: groundY - 50, width: 200, height: groundHeight });
-                platforms.push({ x: 500, y: groundY, width: 300, height: groundHeight });
-                break;
-            default:
-                // Fallback for higher levels, create a longer single platform
-                platforms.push({ x: 0, y: groundY, width: gameWidth, height: groundHeight });
-                break;
-        }
-    };
-
-    const startGame = () => {
-        score = 0;
-        enemiesDefeatedCount = 0;
-        currentLevel = 1;
-        isGameOver = false;
-        player.x = 50;
-        player.y = 0;
-        player.velocityY = 0;
-        
-        enemies.length = 0;
-        bullets.length = 0;
-        createPlatforms();
-        
-        document.getElementById('mainMenu').classList.add('hidden');
-        document.getElementById('gameContainer').classList.remove('hidden');
-        
-        isGameRunning = true;
-        isGamePaused = false;
-        gameLoop();
-    };
-
-    const endGame = () => {
-        cancelAnimationFrame(gameLoopInterval);
-        isGameRunning = false;
-        isGameOver = true;
-        saveHighScore(score);
-        document.getElementById('finalScore').textContent = score;
-        document.getElementById('gameOverScreen').classList.remove('hidden');
-    };
-    
-    // --- UI/Modal Functions ---
-    const showMessageBox = (title, content) => {
-        document.getElementById('messageBoxTitle').textContent = title;
-        document.getElementById('messageBoxContent').textContent = content;
-        document.getElementById('messageBox').classList.remove('hidden');
-    };
-
-    const closeMessageBox = () => {
-        document.getElementById('messageBox').classList.add('hidden');
-    };
-
-    const showQuestionModal = (question) => {
-        document.getElementById('questionText').textContent = question.text;
-        document.getElementById('answerInput').value = '';
-        document.getElementById('questionModal').classList.remove('hidden');
-    };
-
-    const hideQuestionModal = () => {
-        document.getElementById('questionModal').classList.add('hidden');
-    };
-    
-    // --- Event Listeners ---
-    document.getElementById('usernameSubmitBtn').addEventListener('click', () => {
-        const inputUsername = document.getElementById('usernameInput').value.trim();
-        if (inputUsername) {
-            username = inputUsername;
-            document.getElementById('usernamePrompt').classList.add('hidden');
-            document.getElementById('mainMenu').classList.remove('hidden');
-        } else {
-            showMessageBox("Oops!", "Please enter a username to continue.");
-        }
-    });
-
-    document.getElementById('playBtn').addEventListener('click', () => {
-        startGame();
-    });
-
-    document.getElementById('achievementsBtn').addEventListener('click', () => {
-        document.getElementById('mainMenu').classList.add('hidden');
-        document.getElementById('achievementsScreen').classList.remove('hidden');
-        displayHighScores(getHighScores().slice(0, 5));
-    });
-
-    document.getElementById('achievementsBackBtn').addEventListener('click', () => {
-        document.getElementById('achievementsScreen').classList.add('hidden');
-        document.getElementById('mainMenu').classList.remove('hidden');
-    });
-
-    document.getElementById('creditsBtn').addEventListener('click', () => {
-        document.getElementById('mainMenu').classList.add('hidden');
-        document.getElementById('creditsScreen').classList.remove('hidden');
-    });
-
-    document.getElementById('creditsBackBtn').addEventListener('click', () => {
-        document.getElementById('creditsScreen').classList.add('hidden');
-        document.getElementById('mainMenu').classList.remove('hidden');
-    });
-
-    document.getElementById('quitBtn').addEventListener('click', () => {
-        document.getElementById('mainMenu').classList.add('hidden');
-        document.getElementById('usernamePrompt').classList.remove('hidden');
-    });
-
-    document.getElementById('gameOverRestartBtn').addEventListener('click', () => {
-        document.getElementById('gameOverScreen').classList.add('hidden');
-        startGame();
-    });
-
-    document.getElementById('gameOverMenuBtn').addEventListener('click', () => {
-        document.getElementById('gameOverScreen').classList.add('hidden');
-        document.getElementById('mainMenu').classList.remove('hidden');
-    });
-    
-    document.getElementById('submitAnswerBtn').addEventListener('click', () => {
-        const answerInput = document.getElementById('answerInput');
-        const userAnswer = parseInt(answerInput.value, 10);
-        
-        if (!isNaN(userAnswer) && currentQuestion && userAnswer === currentQuestion.answer) {
-            score += 10;
-        } else {
-            score = Math.max(0, score - 5);
-        }
-        hideQuestionModal();
-        isGamePaused = false; // Unpause the game after the question is answered
-    });
-
-    document.addEventListener('keydown', (e) => {
-        keys[e.key] = true;
-        if ((e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w') && !player.isJumping) {
-            player.velocityY = -15;
-            player.isJumping = true;
-        }
-        if (e.key === 'g') {
-            bullets.push({
-                x: player.x + player.width,
-                y: player.y + (player.isDucking ? 12 : player.height / 2) - 5,
-                width: 10,
-                height: 10,
-                speed: 10
-            });
-        }
-    });
-
-    document.addEventListener('keyup', (e) => {
-        keys[e.key] = false;
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('messageBoxCloseBtn').addEventListener('click', closeMessageBox);
-    });
-
-    // --- On Window Load ---
-    window.onload = function() {
-        gameCanvas = document.getElementById('gameCanvas');
-        ctx = gameCanvas.getContext('2d');
-        
-        const resizeCanvas = () => {
-            gameWidth = Math.min(window.innerWidth * 0.9, 800);
-            gameHeight = Math.min(window.innerHeight * 0.8, 600);
-            gameCanvas.width = gameWidth;
-            gameCanvas.height = gameHeight;
-            draw(); // Redraw on resize
-        };
-
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-    };
-</script>
-
+        initFirebase();
+    </script>
 </body>
 </html>
-```
