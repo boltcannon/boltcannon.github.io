@@ -1,734 +1,603 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Jump</title>
+    <title>Umang Gupta - Portfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0d0d1a;
-            color: #ffffff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 1rem;
-            overflow: hidden;
+            background-color: #000010;
+            color: #E0E0E0;
         }
-        .game-container {
-            max-width: 900px;
-            width: 100%;
-            background-color: #1a1a2e;
-            border-radius: 1rem;
-            padding: 1rem;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        canvas {
-            background-color: #2a2a44;
-            border-radius: 0.5rem;
-            display: block;
-        }
-        .ui-panel {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            background-color: #2a2a44;
-            border-radius: 0.5rem;
-            font-size: 1.25rem;
-            font-weight: bold;
-        }
-        .screen-container {
-            min-height: 450px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            height: 100%;
-            padding: 2rem;
-        }
-        .menu-button {
-            background-color: #ffcc00;
-            color: #1a1a2e;
-            font-weight: bold;
-            padding: 1rem 2rem;
-            border-radius: 9999px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            transition: transform 0.2s;
-            cursor: pointer;
-            margin: 0.5rem 0;
-            width: 250px;
-        }
-        .menu-button:hover {
-            transform: scale(1.05);
-        }
-        #username-input {
-            background-color: #2a2a44;
-            border: 2px solid #5b3d2d;
-            padding: 0.5rem;
-            margin-top: 1rem;
-            border-radius: 0.5rem;
-            color: #fff;
-            text-align: center;
-        }
-        #username-input::placeholder {
-            color: #aaa;
-        }
-        .list-container {
-            width: 100%;
-            max-width: 400px;
-            text-align: left;
-            margin-top: 1rem;
-        }
-        .list-item {
-            background-color: #2a2a44;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
-            display: flex;
-            justify-content: space-between;
-        }
-        .list-item span:first-child {
-            font-weight: bold;
-        }
-        .list-item span:last-child {
-            color: #ffcc00;
-        }
-        .level-clear-overlay {
-            position: absolute;
+        #bg-canvas {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            z-index: -1;
+        }
+        .orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .glass-card {
+            background: rgba(10, 10, 25, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .section-title {
+            text-shadow: 0 0 10px #6A0DAD, 0 0 20px #6A0DAD;
+        }
+        .skill-badge {
+            transition: all 0.3s ease;
+        }
+        .skill-badge:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 0 15px rgba(138, 43, 226, 0.7);
+        }
+        .project-card {
+            transition: all 0.3s ease;
+        }
+        .project-card:hover {
+            transform: translateY(-8px);
+            border-color: #8A2BE2;
+        }
+        .contact-icon {
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+        .contact-icon:hover {
+            color: #8A2BE2;
+            transform: scale(1.2);
+        }
+        /* UFO Animation */
+        .ufo-container {
+            position: fixed;
+            top: 60%;
+            left: 100%;
+            width: 100px;
+            height: auto;
+            z-index: 0;
+            animation: floatAcrossUFO 30s linear infinite;
+        }
+        
+        .ufo-svg {
+            animation: wobble 3s ease-in-out infinite;
+        }
+        
+        @keyframes floatAcrossUFO {
+            from { transform: translateX(0); }
+            to { transform: translateX(-150vw); }
+        }
+        
+        @keyframes wobble {
+             0%, 100% { transform: translateY(0) rotate(0); }
+             25% { transform: translateY(-5px) rotate(8deg); }
+             75% { transform: translateY(5px) rotate(-8deg); }
+        }
+        
+        /* Planet Styles */
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0.5;
+            animation: pulse 10s infinite ease-in-out;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px 5px var(--glow-color); }
+            50% { transform: scale(1.05); box-shadow: 0 0 35px 10px var(--glow-color); }
+        }
+        
+        #planet-about {
+            width: 200px;
+            height: 200px;
+            top: 10%;
+            left: 5%;
+            background: radial-gradient(circle at 30% 30%, #ff8a73, #d95b43, #8c3b2b);
+            --glow-color: rgba(217, 91, 67, 0.3);
+        }
+
+        #planet-skills {
+            width: 300px;
+            height: 300px;
+            top: 50%;
+            right: -150px;
+            background: radial-gradient(circle at 70% 30%, #d8c9a3, #b89f7e, #8c6f4a);
+            --glow-color: rgba(216, 201, 163, 0.2);
+        }
+         #planet-journey {
+            width: 180px;
+            height: 180px;
+            top: 40%;
+            left: -80px;
+            background: radial-gradient(circle at 60% 40%, #ffcc80, #ff8f00, #c56000);
+            --glow-color: rgba(255, 143, 0, 0.3);
+        }
+         #planet-projects {
+            width: 150px;
+            height: 150px;
+            top: 20%;
+            left: -50px;
+            background: radial-gradient(circle at 30% 70%, #f0e68c, #d2b48c, #b8860b);
+            --glow-color: rgba(240, 230, 140, 0.3);
+        }
+        #planet-projects::after { /* Saturn-like rings */
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -25%;
+            width: 150%;
+            height: 10px;
+            background: rgba(210, 180, 140, 0.5);
+            border-radius: 50%;
+            transform: translateY(-50%) rotate(-20deg);
+            box-shadow: 0 0 15px rgba(210, 180, 140, 0.5);
+        }
+
+        #planet-contact {
+            width: 120px;
+            height: 120px;
+            bottom: 10%;
+            right: 10%;
+            background: radial-gradient(circle at 70% 70%, #87ceeb, #4682b4, #000080);
+            --glow-color: rgba(70, 130, 180, 0.3);
+        }
+        section {
+            position: relative;
+            overflow: hidden;
+        }
+        /* Scroll Animations */
+        .fade-in-element {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .fade-in-element.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Journey Timeline Styles */
+        .timeline {
+            position: relative;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 4px;
+            background-color: rgba(138, 43, 226, 0.5);
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: -2px;
+            box-shadow: 0 0 10px #8A2BE2;
+        }
+        .timeline-item {
+            padding: 10px 40px;
+            position: relative;
+            width: 50%;
+        }
+        .timeline-item:nth-child(odd) {
+            left: 0;
+        }
+        .timeline-item:nth-child(even) {
+            left: 50%;
+        }
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            right: -12.5px;
+            background-color: #000010;
+            border: 4px solid #8A2BE2;
+            top: 25px;
+            border-radius: 50%;
+            z-index: 1;
+            box-shadow: 0 0 15px #8A2BE2;
+        }
+        .timeline-item:nth-child(even)::after {
+            left: -12.5px;
+        }
+        .timeline-content {
+            padding: 20px 30px;
+            position: relative;
+            border-radius: 12px;
+        }
+        @media screen and (max-width: 768px) {
+            .timeline::after {
+                left: 20px;
+            }
+            .timeline-item {
+                width: 100%;
+                padding-left: 50px;
+                padding-right: 0px;
+            }
+            .timeline-item:nth-child(odd),
+            .timeline-item:nth-child(even) {
+                left: 0;
+            }
+            .timeline-item::after {
+                left: 7.5px;
+            }
+        }
+        
+        /* Big Bang Animation */
+        #big-bang-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            z-index: 1000;
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 10;
+            opacity: 1;
+            transition: opacity 1.5s ease-in 1.5s;
         }
-        .level-clear-text {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #38a169;
-            animation: fadeInOut 2s forwards;
+
+        #big-bang-point {
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            border-radius: 50%;
+            box-shadow: 0 0 20px 10px white, 0 0 50px 25px #ff00ff, 0 0 100px 50px #00ffff;
+            animation: bigBangExplosion 1.5s ease-out forwards;
         }
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: scale(0.5); }
-            50% { opacity: 1; transform: scale(1); }
-            100% { opacity: 0; transform: scale(1.5); }
+
+        @keyframes bigBangExplosion {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(250);
+                opacity: 0;
+            }
+        }
+
+        .content-hidden {
+            opacity: 0;
+        }
+        .content-visible {
+            opacity: 1;
+            transition: opacity 1s ease-in;
         }
     </style>
 </head>
-<body>
-    <div class="game-container">
-        <!-- Main Menu Screen -->
-        <div id="main-menu-screen" class="screen-container">
-            <h1 class="text-3xl md:text-5xl font-extrabold mb-4 text-yellow-500">Knowledge Jump</h1>
-            <p class="text-lg text-gray-300 mb-8">Jump on the correct platform to win!</p>
-            <button id="play-button" class="menu-button">Play</button>
-            <button id="achievements-button" class="menu-button">Achievements</button>
-            <button id="credits-button" class="menu-button">Credits</button>
-        </div>
-
-        <!-- Play Screen (with username input) -->
-        <div id="play-screen" class="screen-container hidden">
-            <h2 class="text-3xl font-extrabold mb-4 text-yellow-500">Enter your name</h2>
-            <input type="text" id="username-input" placeholder="Your Name" class="text-center" />
-            <div class="controls-info mt-4">
-                Use **Left** and **Right** arrow keys to move.<br>
-                Use **Up** arrow key to jump.<br>
-                Use **Down** arrow key to duck.
-            </div>
-            <button id="start-game-button" class="menu-button mt-6">Start Game</button>
-            <button id="back-to-main-menu-button" class="menu-button">Back</button>
-        </div>
-
-        <!-- Achievements Screen -->
-        <div id="achievements-screen" class="screen-container hidden">
-            <h2 class="text-3xl font-extrabold mb-4 text-yellow-500">Top 5 High Scores</h2>
-            <div id="high-score-list" class="list-container">
-                <p>Loading...</p>
-            </div>
-            <button id="back-to-menu-from-achievements" class="menu-button mt-6">Back to Menu</button>
-        </div>
-
-        <!-- Credits Screen -->
-        <div id="credits-screen" class="screen-container hidden">
-            <h2 class="text-3xl font-extrabold mb-4 text-yellow-500">Credits</h2>
-            <div class="flex flex-col gap-2 text-lg">
-                <p>Sam</p>
-                <p>Aadi</p>
-                <p>Umang</p>
-                <p>Sid</p>
-            </div>
-            <button id="back-to-menu-from-credits" class="menu-button mt-6">Back to Menu</button>
-        </div>
-
-        <!-- Game UI -->
-        <div id="game-ui" class="hidden w-full">
-            <div class="ui-panel">
-                <span id="level-display">Level: 1</span>
-                <span id="score-display">Score: 0</span>
-            </div>
-            <canvas id="game-canvas"></canvas>
-        </div>
-        
-        <!-- Game Over Screen -->
-        <div id="game-over-screen" class="screen-container hidden">
-            <h2 id="game-over-title" class="text-3xl md:text-4xl font-extrabold text-red-500 mb-4">Game Over!</h2>
-            <p class="text-xl mb-2">You reached level <span id="final-level"></span></p>
-            <p class="text-xl mb-6">Your final score is: <span id="final-score"></span></p>
-            <button id="restart-button" class="menu-button">Restart</button>
-            <button id="quit-button" class="menu-button">Quit to Menu</button>
-        </div>
+<body class="overflow-x-hidden">
+    <div id="big-bang-overlay">
+        <div id="big-bang-point"></div>
+    </div>
+    <canvas id="bg-canvas"></canvas>
+    
+    <!-- Floating SVG UFO -->
+    <div class="ufo-container">
+        <svg class="ufo-svg" viewBox="0 0 100 50" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="50" cy="35" rx="50" ry="15" fill="#B0C4DE"/>
+            <path d="M30 35 Q 50 10 70 35 Z" fill="#778899"/>
+            <ellipse cx="50" cy="35" rx="40" ry="8" fill="#4682B4" opacity="0.5"/>
+            <circle cx="30" cy="38" r="3" fill="#FFFF00" class="ufo-light"/>
+            <circle cx="50" cy="40" r="3" fill="#FF0000" class="ufo-light"/>
+            <circle cx="70" cy="38" r="3" fill="#00FF00" class="ufo-light"/>
+        </svg>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables provided by the Canvas environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    <!-- Header -->
+    <header class="fixed top-0 left-0 w-full z-50 glass-card content-hidden">
+        <div class="container mx-auto px-6 py-4 flex justify-end items-center">
+            <nav class="hidden md:flex space-x-8 text-lg">
+                <a href="#about" class="hover:text-[#8A2BE2] transition-colors duration-300">About</a>
+                <a href="#skills" class="hover:text-[#8A2BE2] transition-colors duration-300">Skills</a>
+                <a href="#journey" class="hover:text-[#8A2BE2] transition-colors duration-300">Journey</a>
+                <a href="#projects" class="hover:text-[#8A2BE2] transition-colors duration-300">Projects</a>
+                <a href="#contact" class="hover:text-[#8A2BE2] transition-colors duration-300">Contact</a>
+            </nav>
+            <button id="mobile-menu-button" class="md:hidden text-2xl">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
+             <a href="#about" class="block py-2 hover:text-[#8A2BE2]">About</a>
+             <a href="#skills" class="block py-2 hover:text-[#8A2BE2]">Skills</a>
+             <a href="#journey" class="block py-2 hover:text-[#8A2BE2]">Journey</a>
+             <a href="#projects" class="block py-2 hover:text-[#8A2BE2]">Projects</a>
+             <a href="#contact" class="block py-2 hover:text-[#8A2BE2]">Contact</a>
+        </div>
+    </header>
 
-        const canvas = document.getElementById('game-canvas');
-        const ctx = canvas.getContext('2d');
-        const mainMenuScreen = document.getElementById('main-menu-screen');
-        const playScreen = document.getElementById('play-screen');
-        const achievementsScreen = document.getElementById('achievements-screen');
-        const creditsScreen = document.getElementById('credits-screen');
-        const gameUI = document.getElementById('game-ui');
-        const gameOverScreen = document.getElementById('game-over-screen');
-        const playButton = document.getElementById('play-button');
-        const achievementsButton = document.getElementById('achievements-button');
-        const creditsButton = document.getElementById('credits-button');
-        const startGameButton = document.getElementById('start-game-button');
-        const restartButton = document.getElementById('restart-button');
-        const quitButton = document.getElementById('quit-button');
-        const backToMainMenuButton = document.getElementById('back-to-main-menu-button');
-        const backToMenuFromAchievementsButton = document.getElementById('back-to-menu-from-achievements');
-        const backToMenuFromCreditsButton = document.getElementById('back-to-menu-from-credits');
-        const usernameInput = document.getElementById('username-input');
-        const levelDisplay = document.getElementById('level-display');
-        const scoreDisplay = document.getElementById('score-display');
-        const finalLevelDisplay = document.getElementById('final-level');
-        const finalScoreDisplay = document.getElementById('final-score');
-        const highScoreList = document.getElementById('high-score-list');
+    <main class="relative z-10 content-hidden">
+        <!-- Hero Section -->
+        <section id="home" class="h-screen flex items-center justify-center text-center">
+            <div class="px-4">
+                <h1 class="orbitron text-4xl md:text-7xl font-bold tracking-wider text-white uppercase" style="text-shadow: 0 0 20px #8A2BE2;">
+                    Umang Gupta
+                </h1>
+                <p class="mt-4 text-lg md:text-2xl text-gray-300">
+                    M.Tech in Educational Technology @ <span class="font-semibold text-white">IIT Bombay</span>
+                </p>
+                <p class="mt-2 text-md md:text-xl text-gray-400">Aspiring EdTech Innovator | Full-Stack Enthusiast</p>
+            </div>
+        </section>
 
-        canvas.width = 800;
-        canvas.height = 450;
+        <!-- About Section -->
+        <section id="about" class="py-20">
+            <div id="planet-about" class="planet"></div>
+            <div class="container mx-auto px-6">
+                 <h2 class="orbitron text-4xl font-bold text-center mb-12 section-title fade-in-element">ABOUT ME</h2>
+                 <div class="max-w-4xl mx-auto glass-card rounded-2xl p-8 md:p-10 text-center fade-in-element">
+                     <p class="text-lg md:text-xl leading-relaxed">
+                         I am a passionate and driven technologist currently pursuing a Master's degree in Educational Technology from the prestigious IIT Bombay. My journey in technology started with a Bachelor's in Computer Science, where I built a strong foundation in programming and problem-solving. Now, I am focused on leveraging technology to create innovative and impactful learning experiences. I thrive on challenges and am always eager to learn and explore new frontiers in the world of EdTech.
+                     </p>
+                 </div>
+            </div>
+        </section>
 
-        let game;
-        let animationFrameId;
-        let username = 'Anonymous';
-        let db;
+        <!-- Skills Section -->
+        <section id="skills" class="py-20 bg-black bg-opacity-20">
+            <div id="planet-skills" class="planet"></div>
+            <div class="container mx-auto px-6">
+                <h2 class="orbitron text-4xl font-bold text-center mb-12 section-title fade-in-element">TECHNICAL SKILLS</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto text-center">
+                    <div class="skill-badge glass-card p-6 rounded-lg fade-in-element">
+                        <i class="fab fa-python text-5xl text-[#3776AB]"></i>
+                        <h3 class="orbitron mt-4 text-xl font-semibold">Python</h3>
+                    </div>
+                    <div class="skill-badge glass-card p-6 rounded-lg fade-in-element">
+                        <i class="fas fa-code text-5xl text-[#A8B9CC]"></i>
+                        <h3 class="orbitron mt-4 text-xl font-semibold">C / C++</h3>
+                    </div>
+                    <div class="skill-badge glass-card p-6 rounded-lg fade-in-element">
+                        <i class="fas fa-project-diagram text-5xl text-[#61DAFB]"></i>
+                        <h3 class="orbitron mt-4 text-xl font-semibold">DSA</h3>
+                    </div>
+                    <div class="skill-badge glass-card p-6 rounded-lg fade-in-element">
+                         <i class="fas fa-database text-5xl text-[#4479A1]"></i>
+                         <h3 class="orbitron mt-4 text-xl font-semibold">SQL</h3>
+                    </div>
+                </div>
 
-        const questions = [
-            { question: "What is the capital of France?", options: ["London", "Paris", "Berlin", "Rome"], answer: "Paris" },
-            { question: "What is the largest ocean on Earth?", options: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"], answer: "Pacific Ocean" },
-            { question: "What is the largest organ in the human body?", options: ["Heart", "Liver", "Skin", "Brain"], answer: "Skin" },
-            { question: "Who wrote 'Romeo and Juliet'?", options: ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"], answer: "William Shakespeare" },
-            { question: "What is the chemical symbol for gold?", options: ["Au", "Ag", "Fe", "Pb"], answer: "Au" },
-            { question: "Which gas do plants absorb from the atmosphere?", options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"], answer: "Carbon Dioxide" },
-            { question: "What is the currency of Japan?", options: ["Yen", "Euro", "Dollar", "Peso"], answer: "Yen" },
-            { question: "Which famous scientist developed the theory of relativity?", options: ["Isaac Newton", "Albert Einstein", "Stephen Hawking", "Marie Curie"], answer: "Albert Einstein" },
-            { question: "In what year did the Titanic sink?", options: ["1912", "1915", "1918", "1921"], answer: "1912" },
-            { question: "How many continents are there?", options: ["5", "6", "7", "8"], answer: "7" },
-            { question: "What is the smallest planet in our solar system?", options: ["Mars", "Mercury", "Pluto", "Earth"], answer: "Mercury" },
-            { question: "What is the boiling point of water in Celsius?", options: ["100°C", "0°C", "50°C", "200°C"], answer: "100°C" },
-            { question: "What is the longest river in the world?", options: ["Nile", "Amazon", "Yangtze", "Mississippi"], answer: "Nile" },
-            { question: "Who painted the Mona Lisa?", options: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Claude Monet"], answer: "Leonardo da Vinci" },
-            { question: "What is the capital of Australia?", options: ["Sydney", "Melbourne", "Canberra", "Perth"], answer: "Canberra" },
-            { question: "What is the square root of 64?", options: ["6", "7", "8", "9"], answer: "8" },
-            { question: "Which planet is known as the 'Red Planet'?", options: ["Mars", "Jupiter", "Venus", "Saturn"], answer: "Mars" },
-            { question: "Who was the first man to walk on the moon?", options: ["Yuri Gagarin", "Buzz Aldrin", "Neil Armstrong", "Michael Collins"], answer: "Neil Armstrong" },
-            { question: "What is the largest country in the world by land area?", options: ["China", "Canada", "USA", "Russia"], answer: "Russia" },
-            { question: "What is the primary gas found in the Earth's atmosphere?", options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Argon"], answer: "Nitrogen" },
-            { question: "What is the chemical symbol for oxygen?", options: ["O", "Ox", "O2", "Oz"], answer: "O" },
-            { question: "What is the hardest natural substance on Earth?", options: ["Gold", "Iron", "Diamond", "Quartz"], answer: "Diamond" },
-            { question: "Who wrote the play 'Hamlet'?", options: ["William Shakespeare", "Charles Dickens", "Leo Tolstoy", "Jane Austen"], answer: "William Shakespeare" },
-            { question: "What is the capital of Canada?", options: ["Toronto", "Vancouver", "Ottawa", "Montreal"], answer: "Ottawa" },
-            { question: "How many bones are in the adult human body?", options: ["206", "210", "200", "198"], answer: "206" },
-            { question: "What is the largest mammal?", options: ["Elephant", "Blue Whale", "Giraffe", "Lion"], answer: "Blue Whale" },
-            { question: "What is the name of the galaxy our solar system is in?", options: ["Andromeda", "Triangulum", "Milky Way", "Whirlpool"], answer: "Milky Way" },
-            { question: "What is the main ingredient in guacamole?", options: ["Tomato", "Avocado", "Onion", "Lime"], answer: "Avocado" },
-            { question: "What is the longest bone in the human body?", options: ["Tibia", "Fibula", "Femur", "Humerus"], answer: "Femur" },
-            { question: "What is the official language of Brazil?", options: ["Spanish", "Portuguese", "French", "English"], answer: "Portuguese" },
-            { question: "What is the capital of China?", options: ["Shanghai", "Beijing", "Hong Kong", "Tokyo"], answer: "Beijing" },
-            { question: "What is the most widely spoken language in the world?", options: ["English", "Mandarin Chinese", "Spanish", "Hindi"], answer: "Mandarin Chinese" },
-            { question: "What is the chemical formula for water?", options: ["H2O", "CO2", "O2", "NaCl"], answer: "H2O" },
-            { question: "Which continent is the Sahara Desert located on?", options: ["Asia", "Australia", "Africa", "South America"], answer: "Africa" },
-            { question: "What is the largest city in the world by population?", options: ["Tokyo", "Delhi", "Shanghai", "Mexico City"], answer: "Tokyo" },
-            { question: "Who was the first President of the United States?", options: ["Thomas Jefferson", "Abraham Lincoln", "George Washington", "John Adams"], answer: "George Washington" },
-            { question: "What is the value of pi?", options: ["3.14", "3.12", "3.16", "3.18"], answer: "3.14" },
-            { question: "What is the primary component of the sun?", options: ["Oxygen", "Helium", "Hydrogen", "Carbon"], answer: "Hydrogen" },
-            { question: "What is the most common element in the universe?", options: ["Helium", "Oxygen", "Hydrogen", "Carbon"], answer: "Hydrogen" },
-            { question: "What is the capital of Italy?", options: ["Venice", "Milan", "Rome", "Naples"], answer: "Rome" },
-            { question: "What is the largest country in South America?", options: ["Argentina", "Brazil", "Colombia", "Peru"], answer: "Brazil" },
-            { question: "Which famous scientist formulated the laws of motion and universal gravitation?", options: ["Galileo Galilei", "Isaac Newton", "Johannes Kepler", "Nikola Tesla"], answer: "Isaac Newton" },
-            { question: "What is the largest state in the USA by land area?", options: ["Texas", "California", "Alaska", "Florida"], answer: "Alaska" },
-            { question: "What is the currency of India?", options: ["Yen", "Dollar", "Rupee", "Euro"], answer: "Rupee" },
-            { question: "What is the capital of Japan?", options: ["Kyoto", "Osaka", "Tokyo", "Hiroshima"], answer: "Tokyo" },
-            { question: "How many planets are in our solar system?", options: ["7", "8", "9", "10"], answer: "8" },
-            { question: "Which is the tallest mountain in the world?", options: ["Mount Everest", "K2", "Kangchenjunga", "Lhotse"], answer: "Mount Everest" },
-            { question: "What is the name of the largest rainforest in the world?", options: ["Congo", "Valdivian", "Amazon", "Daintree"], answer: "Amazon" },
-            { question: "What is the capital of Germany?", options: ["Hamburg", "Munich", "Frankfurt", "Berlin"], answer: "Berlin" },
-            { question: "What is the powerhouse of the cell?", options: ["Nucleus", "Ribosome", "Mitochondria", "Cytoplasm"], answer: "Mitochondria" },
-            { question: "Who was the first woman to win a Nobel Prize?", options: ["Mother Teresa", "Marie Curie", "Rosalind Franklin", "Jane Goodall"], answer: "Marie Curie" },
-            { question: "What is the chemical symbol for table salt?", options: ["NaCl", "KCl", "H2O", "CO2"], answer: "NaCl" },
-            { question: "What is the capital of Egypt?", options: ["Luxor", "Cairo", "Giza", "Alexandria"], answer: "Cairo" },
-            { question: "What is the main function of the kidneys?", options: ["Digestion", "Filtering blood", "Pumping blood", "Breathing"], answer: "Filtering blood" },
-            { question: "Which country is home to the kangaroo?", options: ["New Zealand", "Australia", "South Africa", "Brazil"], answer: "Australia" },
-            { question: "Who wrote 'Pride and Prejudice'?", options: ["Charlotte Bronte", "Jane Austen", "Emily Bronte", "Mary Shelley"], answer: "Jane Austen" },
-            { question: "What is the capital of South Korea?", options: ["Busan", "Daegu", "Incheon", "Seoul"], answer: "Seoul" },
-            { question: "Which gas is most abundant in the air we breathe?", options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Helium"], answer: "Nitrogen" },
-            { question: "What is the largest bird in the world?", options: ["Eagle", "Ostrich", "Emu", "Penguin"], answer: "Ostrich" },
-            { question: "How many years are in a millennium?", options: ["100", "500", "1000", "5000"], answer: "1000" },
-            { question: "Who painted the Sistine Chapel ceiling?", options: ["Raphael", "Michelangelo", "Leonardo da Vinci", "Donatello"], answer: "Michelangelo" },
-            { question: "What is the chemical symbol for iron?", options: ["Ir", "Fe", "In", "Au"], answer: "Fe" },
-            { question: "What is the main ingredient of bread?", options: ["Sugar", "Flour", "Salt", "Yeast"], answer: "Flour" },
-            { question: "How many sides does a hexagon have?", options: ["5", "6", "7", "8"], answer: "6" },
-            { question: "What is the capital of Spain?", options: ["Barcelona", "Madrid", "Seville", "Valencia"], answer: "Madrid" },
-            { question: "What is the name of the largest desert in the world?", options: ["Gobi", "Kalahari", "Sahara", "Antarctic"], answer: "Antarctic" },
-            { question: "Who was the first man to fly in space?", options: ["Neil Armstrong", "Yuri Gagarin", "Buzz Aldrin", "Alan Shepard"], answer: "Yuri Gagarin" },
-            { question: "What is the capital of Russia?", options: ["St. Petersburg", "Moscow", "Kazan", "Sochi"], answer: "Moscow" },
-            { question: "What is the main purpose of photosynthesis in plants?", options: ["To release oxygen", "To create food", "To absorb water", "To grow"], answer: "To create food" },
-            { question: "What is the primary color of a ripe banana?", options: ["Red", "Green", "Blue", "Yellow"], answer: "Yellow" },
-            { question: "Which organ pumps blood throughout the body?", options: ["Lungs", "Brain", "Heart", "Stomach"], answer: "Heart" },
-            { question: "What is the chemical symbol for helium?", options: ["He", "H", "Hl", "Hm"], answer: "He" },
-            { question: "What is the capital of the United Kingdom?", options: ["Manchester", "London", "Edinburgh", "Cardiff"], answer: "London" },
-            { question: "What is the smallest continent by land area?", options: ["Europe", "Australia", "Antarctica", "South America"], answer: "Australia" },
-            { question: "What is the capital of Mexico?", options: ["Cancún", "Guadalajara", "Mexico City", "Puebla"], answer: "Mexico City" },
-            { question: "How many legs does a spider have?", options: ["6", "8", "10", "12"], answer: "8" },
-            { question: "What is the fastest land animal?", options: ["Lion", "Cheetah", "Gazelle", "Leopard"], answer: "Cheetah" },
-            { question: "What is the world's most populous country?", options: ["China", "India", "USA", "Indonesia"], answer: "India" },
-            { question: "What is the capital of Thailand?", options: ["Chiang Mai", "Phuket", "Bangkok", "Pattaya"], answer: "Bangkok" },
-            { question: "Which famous pyramid is located in Egypt?", options: ["Pyramid of Djoser", "Pyramid of Khafre", "Great Pyramid of Giza", "Red Pyramid"], answer: "Great Pyramid of Giza" },
-            { question: "What is the chemical symbol for silver?", options: ["Ag", "Au", "Si", "Fe"], answer: "Ag" },
-            { question: "What is the capital of Greece?", options: ["Sparta", "Thebes", "Athens", "Corinth"], answer: "Athens" },
-            { question: "Which country is famous for the Eiffel Tower?", options: ["Italy", "Spain", "France", "Germany"], answer: "France" },
-            { question: "What is the largest animal on Earth?", options: ["Elephant", "Giraffe", "Blue Whale", "Great White Shark"], answer: "Blue Whale" },
-            { question: "How many bones are in the human hand?", options: ["25", "27", "29", "31"], answer: "27" },
-            { question: "What is the smallest continent in the world?", options: ["Asia", "Europe", "Australia", "Africa"], answer: "Australia" },
-            { question: "What is the capital of Sweden?", options: ["Gothenburg", "Malmö", "Uppsala", "Stockholm"], answer: "Stockholm" },
-            { question: "What is the chemical formula for salt?", options: ["NaCl", "KCl", "H2O", "CO2"], answer: "NaCl" },
-            { question: "Who was the first American in space?", options: ["John Glenn", "Alan Shepard", "Neil Armstrong", "Buzz Aldrin"], answer: "Alan Shepard" },
-            { question: "What is the capital of Argentina?", options: ["Buenos Aires", "Cordoba", "Rosario", "Mendoza"], answer: "Buenos Aires" },
-            { question: "What is the hardest mineral?", options: ["Talc", "Gypsum", "Diamond", "Quartz"], answer: "Diamond" },
-            { question: "What is the largest country in Africa by area?", options: ["Sudan", "Algeria", "Democratic Republic of Congo", "Libya"], answer: "Algeria" },
-            { question: "How many teeth does an adult human have?", options: ["28", "30", "32", "34"], answer: "32" },
-            { question: "What is the capital of New Zealand?", options: ["Auckland", "Christchurch", "Wellington", "Queenstown"], answer: "Wellington" },
-            { question: "What is the largest organ in the human body?", options: ["Brain", "Liver", "Lungs", "Skin"], answer: "Skin" },
-            { question: "Who is known as the 'Father of modern physics'?", options: ["Isaac Newton", "Galileo Galilei", "Albert Einstein", "Stephen Hawking"], answer: "Albert Einstein" },
-            { question: "What is the capital of Peru?", options: ["Cusco", "Lima", "Arequipa", "Trujillo"], answer: "Lima" },
-            { question: "How many legs does a spider have?", options: ["4", "6", "8", "10"], answer: "8" },
-            { question: "What is the longest river in the United States?", options: ["Mississippi River", "Missouri River", "Colorado River", "Rio Grande"], answer: "Missouri River" },
-            { question: "What is the largest country by population in Africa?", options: ["Egypt", "Nigeria", "Ethiopia", "South Africa"], answer: "Nigeria" },
-            { question: "What is the capital of Brazil?", options: ["Rio de Janeiro", "Sao Paulo", "Brasilia", "Salvador"], answer: "Brasilia" },
-            { question: "Who was the first person to circumnavigate the Earth?", options: ["Christopher Columbus", "Ferdinand Magellan", "Vasco da Gama", "James Cook"], answer: "Ferdinand Magellan" },
-            { question: "How many oceans are there on Earth?", options: ["4", "5", "6", "7"], answer: "5" },
-            { question: "What is the highest mountain in North America?", options: ["Mount Rainier", "Mount Denali", "Mount Logan", "Pico de Orizaba"], answer: "Mount Denali" },
-            { question: "What is the capital of South Africa?", options: ["Cape Town", "Pretoria", "Johannesburg", "Durban"], answer: "Pretoria" },
-            { question: "What is the largest planet in our solar system?", options: ["Saturn", "Jupiter", "Uranus", "Neptune"], answer: "Jupiter" },
-            { question: "How many stars are on the flag of the USA?", options: ["40", "50", "52", "55"], answer: "50" }
-        ];
+                <h2 class="orbitron text-4xl font-bold text-center my-16 section-title fade-in-element">SOFT SKILLS</h2>
+                <div class="flex flex-wrap justify-center gap-4 max-w-5xl mx-auto">
+                    <span class="bg-purple-800 text-white text-lg font-semibold px-6 py-3 rounded-full fade-in-element">Problem-Solving</span>
+                    <span class="bg-purple-800 text-white text-lg font-semibold px-6 py-3 rounded-full fade-in-element">Effective Communication</span>
+                    <span class="bg-purple-800 text-white text-lg font-semibold px-6 py-3 rounded-full fade-in-element">Team Collaboration</span>
+                    <span class="bg-purple-800 text-white text-lg font-semibold px-6 py-3 rounded-full fade-in-element">Adaptability</span>
+                    <span class="bg-purple-800 text-white text-lg font-semibold px-6 py-3 rounded-full fade-in-element">Critical Thinking</span>
+                </div>
+            </div>
+        </section>
 
-        class Player {
-            constructor() {
-                this.baseHeight = 30;
-                this.duckHeight = 15;
-                this.width = 16;
-                this.height = this.baseHeight;
-                this.x = 50;
-                this.y = canvas.height - 50;
-                this.vx = 0;
-                this.vy = 0;
-                this.gravity = 0.5;
-                this.isJumping = false;
-                this.isDucking = false;
-                this.rotation = 0;
-                this.legOffset = 0;
-                this.legDirection = 1;
-            }
+        <!-- Journey Section -->
+        <section id="journey" class="py-20">
+            <div id="planet-journey" class="planet"></div>
+            <div class="container mx-auto px-6">
+                <h2 class="orbitron text-4xl font-bold text-center mb-12 section-title fade-in-element">MY JOURNEY</h2>
+                <div class="timeline">
+                    <!-- B.Tech -->
+                    <div class="timeline-item fade-in-element">
+                        <div class="timeline-content glass-card">
+                            <h3 class="orbitron text-2xl font-bold text-[#8A2BE2]">B.Tech, Computer Science</h3>
+                            <p class="text-lg mt-2">Mahatma Gandhi Chitrakoot Gramodaya Vishwavidyalaya, Satna</p>
+                            <p class="text-gray-400 mt-1">2021 - 2025</p>
+                        </div>
+                    </div>
+                    <!-- M.Tech -->
+                    <div class="timeline-item fade-in-element">
+                        <div class="timeline-content glass-card">
+                            <h3 class="orbitron text-2xl font-bold text-[#8A2BE2]">M.Tech, Educational Technology</h3>
+                            <p class="text-lg mt-2">Indian Institute of Technology, Bombay</p>
+                            <p class="text-gray-400 mt-1">2025 - 2027</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-            draw() {
-                ctx.save();
-                ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-                ctx.rotate(this.rotation);
-
-                // Body
-                ctx.fillStyle = '#b91c1c';
-                ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
-
-                // Head
-                ctx.fillStyle = '#fef3c7';
-                ctx.beginPath();
-                ctx.arc(0, -this.height / 2 - 8, 8, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Eyes
-                ctx.fillStyle = '#1a1a2e';
-                ctx.beginPath();
-                ctx.arc(-3, -this.height / 2 - 8, 1.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(3, -this.height / 2 - 8, 1.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Legs
-                ctx.fillStyle = '#2563eb';
-                const legWidth = this.width / 2 - 2;
-                const legHeight = 5;
-                ctx.fillRect(-this.width / 2 + 1 + this.legOffset, this.height / 2, legWidth, legHeight);
-                ctx.fillRect(1 - this.legOffset, this.height / 2, legWidth, legHeight);
-
-                ctx.restore();
-            }
-
-            update() {
-                this.vy += this.gravity;
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Adjust player height for ducking
-                if (this.isDucking) {
-                    this.height = this.duckHeight;
-                } else {
-                    this.height = this.baseHeight;
-                }
-
-                // Update animations
-                if (this.isJumping) {
-                    this.rotation += 0.1;
-                } else if (!this.isJumping && this.rotation !== 0) {
-                    this.rotation = 0;
-                }
-
-                if (Math.abs(this.vx) > 0 && !this.isJumping) {
-                    this.legOffset += 0.5 * this.legDirection;
-                    if (this.legOffset > 3 || this.legOffset < -3) {
-                        this.legDirection *= -1;
-                    }
-                } else {
-                    this.legOffset = 0;
-                }
-                
-                // Keep player within canvas bounds
-                if (this.x < 0) this.x = 0;
-                if (this.x + this.width > canvas.width) this.x = canvas.width - this.width;
-            }
-        }
-
-        class Platform {
-            constructor(x, y, width, height, isCorrect = false, text = '') {
-                this.x = x;
-                this.y = y;
-                this.width = width;
-                this.height = height;
-                this.isCorrect = isCorrect;
-                this.text = text;
-            }
-
-            draw() {
-                // All platforms are the same color now
-                ctx.fillStyle = '#5b3d2d'; 
-                ctx.fillRect(this.x, this.y, this.width, this.height);
-                if (this.text) {
-                    ctx.fillStyle = '#fff';
-                    ctx.textAlign = 'center';
-                    ctx.font = '16px Inter';
-                    ctx.fillText(this.text, this.x + this.width / 2, this.y - 10);
-                }
-            }
-        }
-
-        class Game {
-            constructor() {
-                this.player = new Player();
-                this.platforms = [];
-                this.level = 0;
-                this.score = 0;
-                this.gameOver = false;
-                this.keys = {};
-                this.currentQuestion = null;
-                this.shuffledQuestions = shuffleArray([...questions]);
-                this.isLevelCleared = false;
-                
-                document.addEventListener('keydown', (e) => {
-                    this.keys[e.key] = true;
-                    if (e.key === 'ArrowDown') {
-                        this.player.isDucking = true;
-                    }
-                });
-                document.addEventListener('keyup', (e) => {
-                    this.keys[e.key] = false;
-                    if (e.key === 'ArrowDown') {
-                        this.player.isDucking = false;
-                    }
-                });
-
-                this.generateLevel();
-                this.gameLoop();
-            }
-
-            generateLevel() {
-                this.level++;
-                this.platforms = [];
-                this.currentQuestion = this.shuffledQuestions[this.level - 1];
-                if (!this.currentQuestion) {
-                    this.endGame(true);
-                    return;
-                }
-
-                // Reset player position for new level
-                this.player.x = 50;
-                this.player.y = canvas.height - 50;
-                this.player.vx = 0;
-                this.player.vy = 0;
-
-                this.platforms.push(new Platform(0, canvas.height - 20, canvas.width, 20)); // Ground platform
-                
-                const questionOptions = shuffleArray([...this.currentQuestion.options]);
-                
-                // I've adjusted the platform width to make it easier to land on
-                const platformWidth = 200; 
-                const platformHeight = 20;
-                const horizontalSpacing = (canvas.width - (platformWidth * questionOptions.length)) / (questionOptions.length + 1);
-                let currentX = horizontalSpacing;
-
-                // Create platforms for the options in a single horizontal line
-                for (let i = 0; i < questionOptions.length; i++) {
-                    const optionText = questionOptions[i];
-                    const isCorrect = optionText === this.currentQuestion.answer;
-                    
-                    this.platforms.push(new Platform(
-                        currentX,
-                        canvas.height - 150,
-                        platformWidth,
-                        platformHeight,
-                        isCorrect,
-                        optionText
-                    ));
-                    currentX += platformWidth + horizontalSpacing;
-                }
-            }
-
-            gameLoop() {
-                if (this.gameOver) {
-                    cancelAnimationFrame(animationFrameId);
-                    return;
-                }
-
-                if (!this.isLevelCleared) {
-                    this.update();
-                    this.draw();
-                } else {
-                    // Draw "Level Cleared!" animation
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.fillStyle = '#38a169';
-                    ctx.textAlign = 'center';
-                    ctx.font = '50px Inter';
-                    ctx.fillText("Level Cleared!", canvas.width / 2, canvas.height / 2);
-                }
-
-                animationFrameId = requestAnimationFrame(() => this.gameLoop());
-            }
-
-            update() {
-                this.player.update();
-
-                // Player movement
-                this.player.vx = 0;
-                if (this.keys['ArrowLeft']) this.player.vx = -5;
-                if (this.keys['ArrowRight']) this.player.vx = 5;
-
-                // Player jump
-                if (this.keys['ArrowUp'] && !this.player.isJumping) {
-                    this.player.vy = -12;
-                    this.player.isJumping = true;
-                }
-                
-                // Collision detection
-                let onPlatform = false;
-                this.platforms.forEach(platform => {
-                    if (this.player.vy >= 0 &&
-                        this.player.y + this.player.height >= platform.y &&
-                        this.player.y + this.player.height <= platform.y + this.player.height &&
-                        this.player.x + this.player.width > platform.x &&
-                        this.player.x < platform.x + platform.width) {
-                        
-                        this.player.y = platform.y - this.player.height;
-                        this.player.vy = 0;
-                        this.player.isJumping = false;
-                        onPlatform = true;
-
-                        // Check if the player landed on a question platform
-                        if (platform.text) {
-                            this.checkAnswer(platform);
-                        }
-                    }
-                });
-
-                // Game over if player falls off the bottom
-                if (this.player.y > canvas.height) {
-                    this.endGame(false);
-                }
-                
-                // Update UI
-                levelDisplay.textContent = `Level: ${this.level}`;
-                scoreDisplay.textContent = `Score: ${this.score}`;
-            }
-            
-            async checkAnswer(platform) {
-                if (platform.isCorrect) {
-                    this.score += 100;
-                    this.isLevelCleared = true;
-                    setTimeout(() => {
-                        this.isLevelCleared = false;
-                        this.generateLevel();
-                    }, 1500); // 1.5 second animation
-                } else {
-                    this.endGame(false);
-                }
-            }
-
-            draw() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                this.drawQuestion();
-                this.platforms.forEach(p => p.draw());
-                this.player.draw();
-            }
-            
-            drawQuestion() {
-                if (!this.currentQuestion) return;
-                ctx.fillStyle = '#ffcc00';
-                ctx.textAlign = 'center';
-                ctx.font = '24px Inter';
-                ctx.fillText(this.currentQuestion.question, canvas.width / 2, 50);
-            }
-
-            async endGame(isWinner) {
-                this.gameOver = true;
-                gameUI.classList.add('hidden');
-                gameOverScreen.classList.remove('hidden');
-
-                if (isWinner) {
-                    document.getElementById('game-over-title').textContent = 'Congratulations!';
-                    finalLevelDisplay.textContent = 'All levels completed!';
-                } else {
-                    document.getElementById('game-over-title').textContent = 'Game Over!';
-                    finalLevelDisplay.textContent = this.level;
-                }
-                finalScoreDisplay.textContent = this.score;
-
-                // Save score to database
-                const scoreData = { username: username, score: this.score };
-                try {
-                    const highScoreDocRef = doc(db, `artifacts/${appId}/public/data/high_scores`, 'top_scores');
-                    const docSnap = await getDoc(highScoreDocRef);
-                    let scores = docSnap.exists() ? docSnap.data().scores : [];
-                    scores.push(scoreData);
-                    scores.sort((a, b) => b.score - a.score);
-                    scores = scores.slice(0, 5); // Keep only the top 5
-                    await setDoc(highScoreDocRef, { scores: scores });
-                    console.log("Score saved!");
-                } catch (error) {
-                    console.error("Error saving score:", error);
-                }
-            }
-        }
-
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
+        <!-- Projects Section -->
+        <section id="projects" class="py-20">
+            <div id="planet-projects" class="planet"></div>
+            <div class="container mx-auto px-6">
+                <h2 class="orbitron text-4xl font-bold text-center mb-12 section-title fade-in-element">PROJECTS</h2>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <!-- Project 1 -->
+                    <div class="project-card glass-card rounded-xl overflow-hidden border-2 border-transparent fade-in-element">
+                        <div class="p-6">
+                            <h3 class="orbitron text-2xl font-bold text-white">Algorithm Visualizer</h3>
+                            <p class="mt-3 text-gray-300">A web-based tool developed to visualize classic sorting and searching algorithms like Bubble Sort, Merge Sort, and Binary Search. Helps in understanding the core concepts of DSA.</p>
+                            <p class="mt-4 text-purple-400 font-semibold">Tech: C++, Data Structures</p>
+                        </div>
+                    </div>
+                    <!-- Project 2 -->
+                    <div class="project-card glass-card rounded-xl overflow-hidden border-2 border-transparent fade-in-element">
+                        <div class="p-6">
+                            <h3 class="orbitron text-2xl font-bold text-white">Interactive Quiz Platform</h3>
+                            <p class="mt-3 text-gray-300">An educational application built with Python for creating and taking quizzes on various subjects. Features include score tracking, and immediate feedback for adaptive learning.</p>
+                            <p class="mt-4 text-purple-400 font-semibold">Tech: Python, SQL</p>
+                        </div>
+                    </div>
+                    <!-- Project 3 -->
+                    <div class="project-card glass-card rounded-xl overflow-hidden border-2 border-transparent fade-in-element">
+                        <div class="p-6">
+                            <h3 class="orbitron text-2xl font-bold text-white">Library Management System</h3>
+                            <p class="mt-3 text-gray-300">A console-based application to manage library operations like issuing books, returning books, and tracking inventory. Built using object-oriented principles in C++.</p>
+                            <p class="mt-4 text-purple-400 font-semibold">Tech: C++, Object-Oriented Programming</p>
+                        </div>
+                    </div>
+                    <!-- Project 4 -->
+                    <div class="project-card glass-card rounded-xl overflow-hidden border-2 border-transparent fade-in-element">
+                        <div class="p-6">
+                            <h3 class="orbitron text-2xl font-bold text-white">AI Chatbot</h3>
+                            <p class="mt-3 text-gray-300">A conversational AI bot built using Python and natural language processing. Capable of understanding user queries and providing relevant, human-like responses.</p>
+                            <p class="mt-4 text-purple-400 font-semibold">Tech: Python, NLTK, Machine Learning</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
         
-        // UI Navigation Functions
-        function showScreen(screen) {
-            mainMenuScreen.classList.add('hidden');
-            playScreen.classList.add('hidden');
-            achievementsScreen.classList.add('hidden');
-            creditsScreen.classList.add('hidden');
-            gameUI.classList.add('hidden');
-            gameOverScreen.classList.add('hidden');
-            screen.classList.remove('hidden');
-        }
+        <!-- Contact Section -->
+        <section id="contact" class="py-20 bg-black bg-opacity-20">
+            <div id="planet-contact" class="planet"></div>
+            <div class="container mx-auto px-6 text-center">
+                <h2 class="orbitron text-4xl font-bold mb-4 section-title fade-in-element">GET IN TOUCH</h2>
+                <p class="text-xl mb-8 text-gray-300 fade-in-element">I'm always open to discussing new projects, creative ideas or opportunities to be part of an amazing team.</p>
+                <div class="flex justify-center items-center space-x-8 text-5xl fade-in-element">
+                    <a href="mailto:Umangupta2002@gmail.com" class="contact-icon text-gray-300">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                    <a href="https://github.com/boltcannon" target="_blank" rel="noopener noreferrer" class="contact-icon text-gray-300">
+                        <i class="fab fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
 
-        function handleStartGame() {
-            username = usernameInput.value || 'Anonymous';
-            showScreen(gameUI);
-            game = new Game();
-        }
+    </main>
 
-        async function fetchHighScores() {
-            showScreen(achievementsScreen);
-            highScoreList.innerHTML = '<p>Loading...</p>';
-            try {
-                const highScoreDocRef = doc(db, `artifacts/${appId}/public/data/high_scores`, 'top_scores');
-                const docSnap = await getDoc(highScoreDocRef);
-                const scores = docSnap.exists() ? docSnap.data().scores : [];
-                
-                if (scores.length > 0) {
-                    highScoreList.innerHTML = '';
-                    scores.forEach((score, index) => {
-                        const scoreItem = document.createElement('div');
-                        scoreItem.className = 'list-item';
-                        scoreItem.innerHTML = `<span>${index + 1}. ${score.username}</span><span>${score.score}</span>`;
-                        highScoreList.appendChild(scoreItem);
-                    });
-                } else {
-                    highScoreList.innerHTML = '<p class="text-center">No high scores yet!</p>';
-                }
+    <footer class="py-6 text-center text-gray-400 content-hidden">
+        <p>&copy; 2024 Umang Gupta. Designed with a celestial touch.</p>
+    </footer>
 
-            } catch (error) {
-                console.error("Error fetching high scores:", error);
-                highScoreList.innerHTML = '<p class="text-center">Error loading scores.</p>';
-            }
+    <script>
+        // Big Bang Intro
+        window.addEventListener('load', () => {
+            const overlay = document.getElementById('big-bang-overlay');
+            const contentElements = document.querySelectorAll('.content-hidden');
+
+            setTimeout(() => {
+                overlay.style.opacity = '0';
+                contentElements.forEach(el => {
+                    el.classList.add('content-visible');
+                    el.classList.remove('content-hidden');
+                });
+            }, 1500);
+
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 3000); 
+        });
+
+        // Three.js Background Animation
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.querySelector('#bg-canvas'),
+        });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.position.z = 5; // Start camera a bit closer
+
+        // Stars
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 8000;
+        const posArray = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 200;
         }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const starMaterial = new THREE.PointsMaterial({
+            size: 0.07,
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.8
+        });
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+
+        // Lights
+        const pointLight = new THREE.PointLight(0xffffff, 1.5);
+        pointLight.position.set(5, 5, 5);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+        scene.add(pointLight, ambientLight);
+
+        // Mouse Interaction for Parallax Effect
+        let mouseX = 0;
+        let mouseY = 0;
+        document.addEventListener('mousemove', (event) => {
+            mouseX = event.clientX - window.innerWidth / 2;
+            mouseY = event.clientY - window.innerHeight / 2;
+        });
+
+        // Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Subtle auto-rotation
+            stars.rotation.x += 0.0001;
+            stars.rotation.y += 0.0001;
+
+            // Parallax effect on camera
+            // Using a small multiplier to make the effect smooth and subtle
+            camera.position.x += (mouseX - camera.position.x) * 0.0005;
+            camera.position.y += (-mouseY - camera.position.y) * 0.0005;
+            camera.lookAt(scene.position);
+
+            renderer.render(scene, camera);
+        }
+        animate();
         
-        // Event Listeners
-        playButton.addEventListener('click', () => showScreen(playScreen));
-        achievementsButton.addEventListener('click', fetchHighScores);
-        creditsButton.addEventListener('click', () => showScreen(creditsScreen));
-        startGameButton.addEventListener('click', handleStartGame);
-        restartButton.addEventListener('click', handleStartGame);
-        quitButton.addEventListener('click', () => showScreen(mainMenuScreen));
-        backToMainMenuButton.addEventListener('click', () => showScreen(mainMenuScreen));
-        backToMenuFromAchievementsButton.addEventListener('click', () => showScreen(mainMenuScreen));
-        backToMenuFromCreditsButton.addEventListener('click', () => showScreen(mainMenuScreen));
-        
-        // Initial setup
-        async function initFirebase() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                const auth = getAuth(app);
-                db = getFirestore(app);
-                setLogLevel('debug');
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                console.log("Firebase initialized and user signed in:", auth.currentUser.uid);
-            } catch (error) {
-                console.error("Error initializing Firebase:", error);
-            }
-        }
+        // Handle Window Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
 
-        initFirebase();
+        // Mobile Menu Toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // Scroll Animations
+        const scrollElements = document.querySelectorAll('.fade-in-element');
+
+        const elementInView = (el, dividend = 1) => {
+            const elementTop = el.getBoundingClientRect().top;
+            return (
+                elementTop <= (window.innerHeight || document.documentElement.clientHeight) / dividend
+            );
+        };
+
+        const displayScrollElement = (element) => {
+            element.classList.add('is-visible');
+        };
+
+        const hideScrollElement = (element) => {
+            element.classList.remove('is-visible');
+        };
+
+        const handleScrollAnimation = () => {
+            scrollElements.forEach((el) => {
+                if (elementInView(el, 1.25)) {
+                    displayScrollElement(el);
+                }
+            });
+        };
+
+        window.addEventListener('scroll', () => {
+            handleScrollAnimation();
+        });
+        
+        // Trigger on load
+        handleScrollAnimation();
     </script>
+
 </body>
 </html>
+
